@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invites</title>
+    <link rel="stylesheet" href="../styles/admin.css" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar__title">Scientific System</div>
+
+            <nav class="sidebar__nav">
+                <a class="sidebar__link" href="dashboard.html">Dashboard</a>
+                <a class="sidebar__link" href="users.html">Users</a>
+                <a class="sidebar__link" href="analysis-history.html">Analysis History</a>
+                <a class="sidebar__link" href="analysis-tasks.html">Async Tasks</a>
+                <a class="sidebar__link sidebar__link--active" href="invites.html">Invites</a>
+                <a class="sidebar__link" href="logs.html">Audit Logs</a>
+            </nav>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <h1 class="header__title">Invites</h1>
+
+                <div class="header__user">
+                    <span>admin@example.com</span>
+                    <button class="button button--secondary">Logout</button>
+                </div>
+            </header>
+
+            <section class="content">
+                <section class="section">
+                    <div class="section__header">
+                        <h2 class="section__title">Create Invite</h2>
+                    </div>
+
+                    <div class="toolbar">
+                        <input class="input" type="number" placeholder="Expires in days" value="7" />
+                        <button class="button button--primary">Create invite</button>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <div class="section__header">
+                        <h2 class="section__title">Invite Codes</h2>
+                        <button class="button button--primary">Refresh</button>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Code</th>
+                                <th>Director ID</th>
+                                <th>Status</th>
+                                <th>Expires at</th>
+                                <th>Created at</th>
+                                <th>Used count</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td>8</td>
+                                <td>7f4c9b2e...</td>
+                                <td>2</td>
+                                <td><span class="badge badge--success">ACTIVE</span></td>
+                                <td>2026-05-25 12:30</td>
+                                <td>2026-05-18 12:30</td>
+                                <td>3</td>
+                            </tr>
+
+                            <tr>
+                                <td>9</td>
+                                <td>a23bd81c...</td>
+                                <td>2</td>
+                                <td><span class="badge badge--failed">EXPIRED</span></td>
+                                <td>2026-05-10 12:30</td>
+                                <td>2026-05-03 12:30</td>
+                                <td>12</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,58 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ---------- Виртуальные окружения ----------
+.venv/
+venv/
+env/
+
+# ---------- Секреты ----------
+.env
+frontend/.env.local
+
+# ---------- Node / фронтенд ----------
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------- Пользовательские файлы backend'а ----------
+backend/app/static/uploads/*
+!backend/app/static/uploads/.gitkeep
+backend/app/static/processed/*
+!backend/app/static/processed/.gitkeep
+
+# ---------- Результаты работы ядра ----------
+data/results/*
+!data/results/.gitkeep
+expert_system.db
+backend/dev.db
+
+# ---------- Редакторы и ОС ----------
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# ---------- Папки исходных проектов до объединения ----------
+# Внутри лежат вложенные .git и битые венвы; в объединённый репозиторий
+# они не нужны — весь код уже перенесён.
+/science/
+/Expert_system_diploma/

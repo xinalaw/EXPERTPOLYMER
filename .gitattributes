@@ -1,0 +1,13 @@
+# Нормализация переводов строк: в репозитории всегда LF,
+# в рабочей копии — родные для системы. Проект собирают и на Windows,
+# и в Linux-контейнерах.
+* text=auto
+
+# Бинарные файлы не трогать
+*.pt      binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.ico     binary
+*.7z      binary
+*.db      binary

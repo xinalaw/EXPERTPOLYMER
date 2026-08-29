@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "expert-system-core"
+version = "1.0.0"
+description = "Ядро экспертной системы анализа морфологии частиц полимерных порошков (YOLOv8-seg + нечёткий вывод Mamdani)"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python>=4.9",
+    "ultralytics>=8.2",
+    "scikit-fuzzy>=0.5",
+    "SQLAlchemy>=2.0",
+]
+
+[project.scripts]
+expert-system = "cli:main"
+
+[tool.setuptools]
+packages = ["expert_system"]
+py-modules = ["cli"]

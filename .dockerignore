@@ -1,0 +1,32 @@
+# Виртуальные окружения
+.venv/
+venv/
+*/venv/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+
+# Секреты и локальные настройки
+.env
+
+# Git
+.git/
+.github/
+
+# Фронтенд (собирается отдельным сервисом)
+frontend/node_modules/
+frontend/dist/
+
+# Пользовательские файлы и результаты — монтируются томами
+backend/app/static/uploads/*
+backend/app/static/processed/*
+data/results/
+data/images/
+expert_system.db
+
+# Прочее
+.idea/
+.vscode/

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analysis History</title>
+    <link rel="stylesheet" href="../styles/admin.css" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar__title">Scientific System</div>
+
+            <nav class="sidebar__nav">
+                <a class="sidebar__link" href="dashboard.html">Dashboard</a>
+                <a class="sidebar__link" href="users.html">Users</a>
+                <a class="sidebar__link sidebar__link--active" href="analysis-history.html">Analysis History</a>
+                <a class="sidebar__link" href="analysis-tasks.html">Async Tasks</a>
+                <a class="sidebar__link" href="invites.html">Invites</a>
+                <a class="sidebar__link" href="logs.html">Audit Logs</a>
+            </nav>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <h1 class="header__title">Analysis History</h1>
+
+                <div class="header__user">
+                    <span>admin@example.com</span>
+                    <button class="button button--secondary">Logout</button>
+                </div>
+            </header>
+
+            <section class="content">
+                <section class="section">
+                    <div class="section__header">
+                        <h2 class="section__title">Analysis Results</h2>
+                    </div>
+
+                    <div class="toolbar">
+                        <input class="input" type="number" placeholder="Filter by user_id" />
+                        <input class="input" type="date" />
+                        <button class="button button--primary">Apply filters</button>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User ID</th>
+                                <th>Original file</th>
+                                <th>Result</th>
+                                <th>Confidence</th>
+                                <th>Image size</th>
+                                <th>Created at</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td>15</td>
+                                <td>3</td>
+                                <td>sample.jpg</td>
+                                <td>Изображение обработано. Найдены частицы</td>
+                                <td>0.95</td>
+                                <td>1920 × 1080</td>
+                                <td>2026-05-18 12:30</td>
+                                <td class="actions">
+                                    <button class="button button--secondary">View</button>
+                                    <button class="button button--danger">Delete</button>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>16</td>
+                                <td>4</td>
+                                <td>polymer_01.png</td>
+                                <td>Изображение обработано. Найдены частицы</td>
+                                <td>0.95</td>
+                                <td>1280 × 720</td>
+                                <td>2026-05-18 13:05</td>
+                                <td class="actions">
+                                    <button class="button button--secondary">View</button>
+                                    <button class="button button--danger">Delete</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

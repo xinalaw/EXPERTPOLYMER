@@ -1,0 +1,204 @@
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import pkg from 'pg'
+import crypto from 'crypto'
+
+dotenv.config()
+
+const { Pool } = pkg
+const app = express()
+
+// Middleware
+app.use(cors())
+app.use(express.json())
+
+// PostgreSQL Pool
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD
+})
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err)
+})
+
+// Функция для хеширования пароля
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex')
+}
+
+// Проверка подключения к БД
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('Database connection error:', err)
+  } else {
+    console.log('Database connected:', res.rows[0])
+  }
+})
+
+// POST /api/register - Регистрация
+app.post('/api/register', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, organization } = req.body
+
+    // Валидация
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Все поля обязательны'
+      })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Пароль должен быть не менее 6 символов'
+      })
+    }
+
+    // Проверка, существует ли пользователь
+    const existingUser = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    )
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Пользователь с таким email уже существует'
+      })
+    }
+
+    // Хеширование пароля
+    const passwordHash = hashPassword(password)
+
+    // Генерация username из email (часть до @)
+    const username = email.split('@')[0]
+
+    // Создание пользователя
+    const result = await pool.query(
+      'INSERT INTO users (username, first_name, last_name, email, password_hash, organization, is_active) VALUES ($1, $2, $3, $4, $5, $6, TRUE) RETURNING id, username, email, first_name, last_name',
+      [username, firstName, lastName, email, passwordHash, organization || null]
+    )
+
+    res.status(201).json({
+      success: true,
+      message: 'Регистрация успешна',
+      user: result.rows[0]
+    })
+  } catch (error) {
+    console.error('Registration error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка сервера при регистрации'
+    })
+  }
+})
+
+// POST /api/login - Вход
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password, rememberMe } = req.body
+
+    // Валидация
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email и пароль обязательны'
+      })
+    }
+
+    // Поиск пользователя
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1 AND is_active = TRUE',
+      [email]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Неверный email или пароль'
+      })
+    }
+
+    const user = result.rows[0]
+    const passwordHash = hashPassword(password)
+
+    // Проверка пароля
+    if (user.password_hash !== passwordHash) {
+      return res.status(401).json({
+        success: false,
+        message: 'Неверный email или пароль'
+      })
+    }
+
+    // Генерация простого токена (в продакшене используйте JWT)
+    const token = crypto.randomBytes(32).toString('hex')
+
+    res.json({
+      success: true,
+      message: 'Вход успешен',
+      token: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        role: user.role
+      },
+      rememberMe: rememberMe || false
+    })
+  } catch (error) {
+    console.error('Login error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка сервера при входе'
+    })
+  }
+})
+
+// GET /api/user/:id - Получить информацию о пользователе
+app.get('/api/user/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const result = await pool.query(
+      'SELECT id, email, first_name, last_name, role, created_at FROM users WHERE id = $1',
+      [id]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Пользователь не найден'
+      })
+    }
+
+    res.json({
+      success: true,
+      user: result.rows[0]
+    })
+  } catch (error) {
+    console.error('Get user error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Ошибка сервера'
+    })
+  }
+})
+
+// POST /api/logout - Выход
+app.post('/api/logout', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Выход выполнен'
+  })
+})
+
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="../styles/admin.css" />
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <div class="sidebar__title">Scientific System</div>
+
+            <nav class="sidebar__nav">
+                <a class="sidebar__link sidebar__link--active" href="dashboard.html">Dashboard</a>
+                <a class="sidebar__link" href="users.html">Users</a>
+                <a class="sidebar__link" href="analysis-history.html">Analysis History</a>
+                <a class="sidebar__link" href="analysis-tasks.html">Async Tasks</a>
+                <a class="sidebar__link" href="invites.html">Invites</a>
+                <a class="sidebar__link" href="logs.html">Audit Logs</a>
+            </nav>
+        </aside>
+
+        <main class="main">
+            <header class="header">
+                <h1 class="header__title">Dashboard</h1>
+
+                <div class="header__user">
+                    <span>admin@example.com</span>
+                    <button class="button button--secondary">Logout</button>
+                </div>
+            </header>
+
+            <section class="content">
+                <section class="section">
+                    <div class="section__header">
+                        <h2 class="section__title">System Overview</h2>
+                    </div>
+
+                    <div class="cards">
+                        <div class="card">
+                            <div class="card__label">Users</div>
+                            <div class="card__value">128</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__label">Directors</div>
+                            <div class="card__value">12</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__label">Researchers</div>
+                            <div class="card__value">116</div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__label">Analysis Results</div>
+                            <div class="card__value">342</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="section">
+                    <div class="section__header">
+                        <h2 class="section__title">Recent Activity</h2>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Actor ID</th>
+                                <th>Action</th>
+                                <th>Target Type</th>
+                                <th>Target ID</th>
+                                <th>Created at</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>ASSIGN_DIRECTOR</td>
+                                <td>user</td>
+                                <td>3</td>
+                                <td>2026-05-18 12:20</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>CREATE_INVITE</td>
+                                <td>invite</td>
+                                <td>8</td>
+                                <td>2026-05-18 12:25</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,13 @@
+# ============================================================================
+#  Полная установка: базовые зависимости + сегментация частиц YOLOv8-seg.
+#
+#  ultralytics тянет torch/torchvision (~2 ГБ). Чтобы не тащить CUDA-колёса,
+#  на CPU-машине сначала поставьте CPU-сборку torch:
+#
+#      pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#      pip install -r requirements-ml.txt
+# ============================================================================
+
+-r requirements.txt
+
+ultralytics>=8.2        # YOLOv8-seg: сегментация частиц на СЭМ-изображении
