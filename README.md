@@ -183,6 +183,17 @@ npm install
 docker compose up --build
 ```
 
+После применения миграций первого администратора можно создать интерактивной
+командой (пароль не попадёт в историю shell):
+
+```bash
+docker compose exec backend python -m app.commands.create_admin \
+  --email admin@example.com --first-name System --last-name Administrator
+```
+
+Команда откажется работать, если администратор уже существует. Дальнейшие роли
+назначаются в пункте «Пользователи» меню администратора.
+
 Поднимутся PostgreSQL (порт 5434), Redis, backend (8000) и Celery-воркер.
 Миграции применяются автоматически. Фронтенд вынесен в отдельный профиль:
 

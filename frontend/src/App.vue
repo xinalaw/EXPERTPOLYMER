@@ -6,6 +6,7 @@ import AnalysisPage from './components/AnalysisPage.vue';
 import AnalysisHistoryPage from './components/AnalysisHistoryPage.vue';
 import ContactsPage from './components/ContactsPage.vue';
 import AboutPage from './components/AboutPage.vue';
+import AdminUsersPage from './components/AdminUsersPage.vue';
 import Footer from './components/Footer.vue';
 import LoginModal from './components/LoginModal.vue';
 import RegisterModal from './components/RegisterModal.vue';
@@ -27,6 +28,7 @@ const navigateTo = (page) => {
     showLoginModal.value = true
     return
   }
+  if (page === 'admin-users' && user.value?.role !== 'admin') return
   currentPage.value = page
 }
 
@@ -122,6 +124,10 @@ onMounted(async () => {
   <MainPage v-if="currentPage === 'home'" @navigate="navigateTo" />
   <AnalysisPage v-if="currentPage === 'analysis'" />
   <AnalysisHistoryPage v-if="currentPage === 'history'" />
+  <AdminUsersPage
+    v-if="currentPage === 'admin-users' && user?.role === 'admin'"
+    :current-user-id="user?.id"
+  />
   <AboutPage v-if="currentPage === 'about'" @navigate="navigateTo" />
   <ContactsPage v-if="currentPage === 'contacts'" />
   <Footer />

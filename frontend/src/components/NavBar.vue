@@ -57,6 +57,10 @@
               <span class="dropdown-icon">📊</span>
               История
             </a>
+            <a v-if="user?.role === 'admin'" href="#" @click.prevent="navigateTo('admin-users')" class="dropdown-item">
+              <span class="dropdown-icon">🛡️</span>
+              Пользователи
+            </a>
             <a href="#" @click.prevent="navigateTo('profile')" class="dropdown-item">
               <span class="dropdown-icon">👤</span>
               Профиль

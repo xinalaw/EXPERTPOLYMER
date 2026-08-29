@@ -34,14 +34,14 @@ def get_users(
     return get_all_users(db, limit, offset)
 
 
-@router.patch("/{user_id}/role", response_model=UserRoleUpdateSchema)
+@router.patch("/{user_id}/role", response_model=UserResponseSchema)
 def change_user_role(
     user_id: int,
     role_data: UserRoleUpdateSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ):
-    return update_user_role(user_id, role_data, db)
+    return update_user_role(user_id, role_data, db, current_user)
 
 
 @router.patch("/{user_id}/director", response_model=UserResponseSchema)
