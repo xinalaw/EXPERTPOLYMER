@@ -1,11 +1,4 @@
 const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-const WS_BASE = (import.meta.env.VITE_WS_URL || '').replace(/\/$/, '')
-
-export function buildWsUrl(path) {
-  const normalized = path.startsWith('/') ? path : `/${path}`
-  return WS_BASE ? `${WS_BASE}${normalized}` : normalized
-}
-
 export function buildUrl(path) {
   const normalized = path.startsWith('/') ? path : `/${path}`
   return API_BASE ? `${API_BASE}${normalized}` : normalized
