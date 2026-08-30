@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.controllers.auth_controller import get_db
+from app.database.dependencies import get_db
 from app.controllers.user_controller import (
     get_all_users,
     update_user_role,

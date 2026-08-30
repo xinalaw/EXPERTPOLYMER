@@ -12,12 +12,9 @@ from app.models.user import User
 from app.services.log_service import create_action_log
 from app.services.access_service import (
     can_access_analysis_result,
-    can_delete_analysis_result,
 )
 from app.services.ml_service import analysis_material_image
-from celery.result import AsyncResult
 from app.tasks.analysis_tasks import analyze_image_task
-from app.tasks.celery_app import celery_app
 
 
 UPLOAD_DIR = "app/static/uploads"
@@ -70,7 +67,7 @@ def delete_analysis_result(
             detail="Результат анализа не найден",
         )
 
-    if not can_delete_analysis_result(db, current_user, analysis_result):
+    if not can_access_analysis_result(db, current_user, analysis_result):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Нет доступа к удалению этого результата",

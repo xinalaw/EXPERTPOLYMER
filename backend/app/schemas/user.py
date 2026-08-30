@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 class UserRegisterSchema(BaseModel):
@@ -23,6 +23,8 @@ class UserLoginSchema(BaseModel):
 
 
 class UserResponseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     username: str
     first_name: str | None = None
@@ -32,9 +34,6 @@ class UserResponseSchema(BaseModel):
     avatar: str | None = None
     role: str
     director_id: int | None = None
-
-    class Config:
-        from_attributes = True
 
 
 class UserRoleUpdateSchema(BaseModel):

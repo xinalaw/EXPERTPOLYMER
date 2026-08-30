@@ -37,34 +37,3 @@ def can_access_analysis_result(
         return bool(researcher and researcher.director_id == current_user.id)
 
     return False
-
-
-def can_delete_analysis_result(
-    db: Session,
-    current_user: User,
-    analysis_result: AnalysisResult,
-) -> bool:
-    return can_access_analysis_result(
-        db=db,
-        current_user=current_user,
-        analysis_result=analysis_result,
-    )
-
-
-def can_access_user_history(
-    db: Session,
-    current_user: User,
-    target_user_id: int,
-) -> bool:
-    if is_admin(current_user):
-        return True
-
-    if is_researcher(current_user):
-        return current_user.id == target_user_id
-
-    if is_director(current_user):
-        researcher = db.query(User).filter(User.id == target_user_id).first()
-
-        return bool(researcher and researcher.director_id == current_user.id)
-
-    return False

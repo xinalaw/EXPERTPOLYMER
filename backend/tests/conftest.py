@@ -13,9 +13,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.database.database import Base
-from app.controllers.auth_controller import get_db
+from app.database.dependencies import get_db
 from app.main import app
-from app.middleware.auth_middleware import get_db as get_auth_middleware_db
 
 from app.models.user import User
 from app.models.analysis_result import AnalysisResult
@@ -75,7 +74,6 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_auth_middleware_db] = override_get_db
 
     with TestClient(app) as test_client:
         yield test_client

@@ -3,7 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.controllers.auth_controller import get_db
+from app.database.dependencies import get_db
 from app.controllers.log_controller import get_action_logs
 from app.middleware.auth_middleware import get_admin_user
 from app.models.user import User

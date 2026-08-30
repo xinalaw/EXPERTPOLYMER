@@ -5,21 +5,13 @@ from sqlalchemy.orm import Session
 
 import os
 
-from app.database.database import SessionLocal
+from app.database.dependencies import get_db
 from app.models.user import User
 
 bearer_scheme = HTTPBearer()
 
 SECRET_KEY = os.getenv("SECRET_KEY", "secret")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_current_user(

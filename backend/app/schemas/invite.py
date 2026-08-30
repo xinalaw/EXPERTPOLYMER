@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DirectorInviteCreateSchema(BaseModel):
@@ -8,15 +8,14 @@ class DirectorInviteCreateSchema(BaseModel):
 
 
 class DirectorInviteResponseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     code: str
     director_id: int
     is_active: bool
     created_at: datetime
     expires_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class DirectorInviteCheckSchema(BaseModel):
@@ -28,10 +27,9 @@ class DirectorInviteCheckSchema(BaseModel):
 
 
 class InviteAcceptanceResponseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     invite_id: int
     user_id: int
     accepted_at: datetime
-
-    class Config:
-        from_attributes = True
