@@ -94,7 +94,7 @@ export async function getAnalysisHistory(params = {}, token = getAuthToken()) {
   if (params.offset != null) search.set('offset', String(params.offset || 0))
 
   const query = search.toString()
-  const path = query ? `/api/history?${query}` : '/history'
+  const path = query ? `/api/history?${query}` : '/api/history'
 
   return apiFetch(path, { token })
 }

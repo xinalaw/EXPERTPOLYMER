@@ -14,3 +14,11 @@ export function changeUserRole(userId, role) {
     body: JSON.stringify({ role }),
   })
 }
+
+export function changeUserDirector(userId, directorId) {
+  return apiFetch(`/api/users/${userId}/director`, {
+    method: 'PATCH',
+    token: getAuthToken(),
+    body: JSON.stringify({ director_id: directorId }),
+  })
+}
