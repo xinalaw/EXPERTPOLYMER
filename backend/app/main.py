@@ -8,7 +8,7 @@ from app.routes.user_routes import router as user_router
 from app.routes.invite_routes import router as invite_router
 from app.routes.director_routes import router as director_router
 from app.routes.log_routes import router as log_router
-from app.routes.websocket_routes import router as websocket_router
+from app.routes.admin_routes import router as admin_router
 
 app = FastAPI(
     title="Scientific System Backend API",
@@ -37,7 +37,7 @@ app.include_router(user_router)
 app.include_router(invite_router)
 app.include_router(director_router)
 app.include_router(log_router)
-app.include_router(websocket_router)
+app.include_router(admin_router)
 
 
 @app.get("/")
