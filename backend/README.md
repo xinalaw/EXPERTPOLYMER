@@ -24,7 +24,6 @@ Backend часть интеллектуальной системы анализ�
 - Github Actions CI
 - Redis
 - Celery
-- WebSocket
 
 ---
 
@@ -81,12 +80,14 @@ Backend часть интеллектуальной системы анализ�
 - фоновые задачи Celery 
 - Redis
 - отслеживание статуса задач
-- обновление WebSocket в реальном времени
+- защищённый polling статуса задачи
 
 ---
 
 ## Administration
 
+- dashboard со сводной статистикой
+- единая Vue-панель для пользователей, анализов, задач, инвайтов и журнала
 - audit logs
 - pagination
 - filtering

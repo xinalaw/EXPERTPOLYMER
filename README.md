@@ -17,7 +17,7 @@
 | Было | Стало | Что это |
 |---|---|---|
 | `Expert_system_diploma/` | `expert_system/`, `cli.py`, `data/`, `tests/` | Ядро: YOLOv8-seg, морфометрия, нечёткий вывод, SQLite-хранилище, CLI |
-| `scientific-system-backend` | `backend/` | FastAPI: JWT, RBAC, инвайты, Celery + Redis, WebSocket, PostgreSQL |
+| `scientific-system-backend` | `backend/` | FastAPI: JWT, RBAC, инвайты, Celery + Redis, PostgreSQL |
 | `expert-polymer` | `frontend/` | Vue 3 + Vite: загрузка снимка, история, админ-часть |
 
 Ключевое изменение при слиянии: раньше backend возвращал **заглушку** —
@@ -50,7 +50,7 @@
 │   └── tests/              #   тесты API
 │
 ├── frontend/               # Vue 3 + Vite
-│   └── src/api/            #   клиент к /api/* и WebSocket
+│   └── src/api/            #   клиент к backend API
 │
 ├── data/
 │   ├── models/yolo_particles_seg.pt   # веса модели
@@ -97,7 +97,8 @@
 ```
 
 Асинхронный путь (`POST /api/analyze/async`) устроен так же, но вызов ядра
-происходит в Celery-воркере, а статус задачи уходит на фронт по WebSocket.
+происходит в Celery-воркере, а frontend получает статус через защищённый
+`GET /api/analyze/tasks/{task_id}`.
 
 ---
 
@@ -192,7 +193,7 @@ docker compose exec backend python -m app.commands.create_admin \
 ```
 
 Команда откажется работать, если администратор уже существует. Дальнейшие роли
-назначаются в пункте «Пользователи» меню администратора.
+назначаются в разделе «Пользователи» рабочей админ-панели.
 
 Поднимутся PostgreSQL (порт 5434), Redis, backend (8000) и Celery-воркер.
 Миграции применяются автоматически. Фронтенд вынесен в отдельный профиль:
@@ -204,7 +205,7 @@ docker compose --profile frontend up
 ### Быстрый запуск без Postgres, Redis и Docker
 
 Если ничего из этого не установлено, система поднимается на SQLite. Работает
-всё, кроме асинхронного анализа через Celery (`/api/analyze/async` и WebSocket) —
+всё, кроме асинхронного анализа через Celery (`/api/analyze/async`) —
 для него нужен Redis. Обычный синхронный `/api/analyze` доступен.
 
 Создать базу (один раз):
@@ -360,5 +361,5 @@ Postman в `docs/postman/`.
 - [docs/expert_system.md](docs/expert_system.md) — методика анализа: метрики,
   база нечётких правил, формат результата ядра, использование как библиотеки
 - [backend/README.md](backend/README.md) — эндпоинты, роли, миграции, CI
-- `frontend/docs/legacy/` — документация к первой версии фронтенда, когда он
-  ходил в собственный Express-сервер (больше не используется)
+- [frontend/README.md](frontend/README.md) — клиентское приложение и единая
+  админ-панель

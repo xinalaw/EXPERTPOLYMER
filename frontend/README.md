@@ -13,10 +13,14 @@ src/
 ├── api/
 │   ├── client.js       # базовый fetch-клиент, JWT, разбор ошибок API
 │   ├── auth.js         # регистрация, вход, текущий пользователь
-│   └── analysis.js     # /api/analyze, асинхронный анализ, история, WebSocket
+│   ├── analysis.js     # /api/analyze, асинхронный анализ и история
+│   ├── users.js        # роли и назначение директора
+│   └── admin.js        # dashboard, задачи, инвайты и audit logs
 ├── components/
 │   ├── AnalysisPage.vue          # загрузка снимка и результаты анализа
 │   ├── AnalysisHistoryPage.vue   # история исследований
+│   ├── AdminPanelPage.vue       # единая рабочая админ-панель
+│   ├── admin/                   # разделы dashboard/history/tasks/invites/logs
 │   ├── LoginModal.vue RegisterModal.vue
 │   └── MainPage.vue AboutPage.vue ContactsPage.vue NavBar.vue Footer.vue
 └── App.vue
@@ -45,7 +49,6 @@ npm run build
 
 ```
 VITE_API_URL=http://localhost:8000
-VITE_WS_URL=ws://localhost:8000
 ```
 
 Если оставить их пустыми, запросы пойдут на тот же origin — так собирают
@@ -58,8 +61,3 @@ VITE_WS_URL=ws://localhost:8000
 `expert`, `composition`, `size_stats`) и появляются, только когда backend
 работает с реальным ядром. Если сервер запущен с `ML_BACKEND=mock`, вместо
 вердикта выводится соответствующее пояснение.
-
-## Устаревшее
-
-`docs/legacy/` — документация и код первой версии, когда фронтенд ходил в
-собственный Express-сервер и напрямую в PostgreSQL. Сейчас не используется.
