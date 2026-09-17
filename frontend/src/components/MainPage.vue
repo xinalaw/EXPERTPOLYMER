@@ -1,491 +1,230 @@
-<template>
-  <main class="main-page">
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero-container">
-        <div class="hero-content">
-          <h1 class="hero-title">
-            Экспертная система анализа
-            <span class="highlight">композитных материалов</span>
-          </h1>
-          <p class="hero-description">
-            Инновационная нейронная сеть для глубокого анализа структуры, свойств 
-            и характеристик полимерных композитов с использованием технологий 
-            машинного обучения и компьютерного зрения.
-          </p>
-          <div class="hero-actions">
-            <button class="btn-primary-large" @click="navigateTo('analysis')">Начать анализ</button>
-            <button class="btn-secondary">Узнать больше</button>
-          </div>
-        </div>
-        <div class="hero-visual">
-          <div class="molecule-animation">
-            <div class="atom atom-1"></div>
-            <div class="atom atom-2"></div>
-            <div class="atom atom-3"></div>
-            <div class="bond bond-1"></div>
-            <div class="bond bond-2"></div>
-            <div class="bond bond-3"></div>
-          </div>
-        </div>
-      </div>
-    </section>
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import FeatureGrid from './ui/FeatureGrid.vue'
 
-    <!-- Features Section -->
-    <section class="features">
-      <div class="container">
-        <h2 class="section-title">Возможности системы</h2>
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-brain"></div>
-            </div>
-            <h3>Нейронный анализ</h3>
-            <p>Глубокое обучение для распознавания микроструктур и выявления дефектов в композитных материалах</p>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-microscope"></div>
-            </div>
-            <h3>Микроскопический анализ</h3>
-            <p>Обработка изображений с электронного и оптического микроскопов для детального изучения структуры</p>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-chart"></div>
-            </div>
-            <h3>Прогнозирование свойств</h3>
-            <p>Предсказание механических, термических и химических свойств на основе структурного анализа</p>
-          </div>
-          
-          <div class="feature-card">
-            <div class="feature-icon">
-              <div class="icon-database"></div>
-            </div>
-            <h3>База знаний</h3>
-            <p>Обширная база данных полимерных композитов и их характеристик для сравнения и анализа</p>
-          </div>
-        </div>
-      </div>
-    </section>
+const headerHeight = ref(0)
+let headerObserver: ResizeObserver | undefined
+onMounted(() => {
+  const header = document.querySelector<HTMLElement>('.navbar')
+  if (!header) return
+  const updateHeight = () => {
+    headerHeight.value = header.getBoundingClientRect().height
+  }
+  updateHeight()
+  headerObserver = new ResizeObserver(updateHeight)
+  headerObserver.observe(header)
+})
+onBeforeUnmount(() => headerObserver?.disconnect())
 
-    <!-- Technology Section -->
-    <section class="technology">
-      <div class="container">
-        <div class="tech-content">
-          <div class="tech-text">
-            <h2>Передовые технологии</h2>
-            <p class="tech-description">
-              Наша система использует современные алгоритмы машинного обучения, 
-              включая сверточные нейронные сети (CNN), рекуррентные нейронные сети (RNN) 
-              и трансформеры для анализа сложных структур композитных материалов.
-            </p>
-            <div class="tech-stats">
-              <div class="stat">
-                <span class="stat-number">95%</span>
-                <span class="stat-label">Точность анализа</span>
-              </div>
-              <div class="stat">
-                <span class="stat-number">10k+</span>
-                <span class="stat-label">Образцов в базе</span>
-              </div>
-              <div class="stat">
-                <span class="stat-number">10s</span>
-                <span class="stat-label">Среднее время обработки</span>
-              </div>
-            </div>
-          </div>
-          <div class="tech-visual">
-            <div class="neural-network">
-              <div class="layer layer-1">
-                <div class="node"></div>
-                <div class="node"></div>
-                <div class="node"></div>
-              </div>
-              <div class="layer layer-2">
-                <div class="node"></div>
-                <div class="node"></div>
-                <div class="node"></div>
-                <div class="node"></div>
-              </div>
-              <div class="layer layer-3">
-                <div class="node"></div>
-                <div class="node"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta">
-      <div class="container">
-        <div class="cta-content">
-          <h2>Готовы начать анализ?</h2>
-          <p>Загрузите изображение вашего композитного материала и получите детальный анализ за секунды</p>
-          <div class="cta-actions">
-            <button class="btn-primary-large" @click="navigateTo('analysis')">Загрузить образец</button>
-            <button class="btn-outline">Связаться с нами</button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-</template>
-
-<script setup>
-// Emits
-const emit = defineEmits(['navigate'])
-
-// Methods
-const navigateTo = (page) => {
-  emit('navigate', page)
-}
+const features = [
+  {
+    title: 'Анализ снимков',
+    text: 'Загрузка микроскопических изображений и распознавание частиц материала.',
+    symbol: '◉',
+  },
+  {
+    title: 'Морфология частиц',
+    text: 'Размеры, округлость и распределение частиц по результатам обработки.',
+    symbol: '⌁',
+  },
+  {
+    title: 'Экспертная оценка',
+    text: 'Заключение о пригодности порошка на основе рассчитанных характеристик.',
+    symbol: '◇',
+  },
+  {
+    title: 'История исследований',
+    text: 'Просмотр сохранённых результатов и скачивание подробного отчёта.',
+    symbol: '▤',
+  },
+]
 </script>
-
+<template>
+  <div class="main-page">
+    <section class="hero" :style="{ '--header-height': headerHeight + 'px' }">
+      <div class="container hero-layout">
+        <div>
+          <p class="eyebrow">EXPERT POLYMER</p>
+          <h1>Экспертная система анализа <span>композитных материалов</span></h1>
+          <p class="hero-description">
+            От микроскопического снимка — к характеристикам частиц и экспертному заключению.
+            Исследуйте структуру материала и сохраняйте результаты в одном месте.
+          </p>
+          <div class="actions">
+            <RouterLink class="btn hero-primary" to="/analysis">Начать анализ</RouterLink
+            ><RouterLink class="btn hero-secondary" to="/about">Узнать больше</RouterLink>
+          </div>
+        </div>
+        <div class="molecule" aria-hidden="true">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="orbit orbit-three"></div>
+          <div class="nucleus"></div>
+          <i class="particle particle-one"></i><i class="particle particle-two"></i
+          ><i class="particle particle-three"></i>
+        </div>
+      </div>
+    </section>
+    <section class="container home-section">
+      <h2>Возможности системы</h2>
+      <FeatureGrid :items="features" />
+    </section>
+    <section class="container home-section">
+      <div class="panel workflow">
+        <h2>От изображения к результату</h2>
+        <ol>
+          <li><strong>Выберите снимок.</strong> JPG, PNG, TIFF или BMP размером до 20 МБ.</li>
+          <li>
+            <strong>Запустите анализ.</strong> Система обработает изображение и рассчитает
+            характеристики.
+          </li>
+          <li>
+            <strong>Изучите результат.</strong> Просмотрите изображение, оценку и сохраните
+            JSON-отчёт.
+          </li>
+        </ol>
+      </div>
+    </section>
+    <section class="container home-section">
+      <div class="cta">
+        <h2>Готовы исследовать образец?</h2>
+        <p>Войдите в систему и загрузите микроскопический снимок.</p>
+        <div class="actions">
+          <RouterLink to="/analysis" class="btn btn-primary">Загрузить образец</RouterLink
+          ><RouterLink to="/contacts" class="btn btn-secondary">Связаться с нами</RouterLink>
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
 <style scoped>
-.main-page {
-  min-height: 100%;
-}
-
-/* Hero Section */
 .hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 4rem 0;
+  min-height: calc(100vh - var(--header-height, 0px));
+  min-height: calc(100dvh - var(--header-height, 0px));
+  display: flex;
+  align-items: center;
+  background: var(--brand-gradient);
   color: white;
-  position: relative;
+  padding: clamp(3rem, 7vw, 6rem) 0;
   overflow: hidden;
 }
-
-.hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
-}
-
-.hero-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+.hero-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   align-items: center;
-  position: relative;
-  z-index: 1;
+  gap: 3rem;
 }
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
-  letter-spacing: -1px;
+.hero h1 {
+  max-width: 800px;
+  font-size: clamp(2rem, 4vw, 3.5rem);
 }
-
-.highlight {
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.hero h1 span {
+  color: #fff0b3;
 }
-
 .hero-description {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  margin-bottom: 2.5rem;
-  opacity: 0.9;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.btn-primary-large {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 30px;
-  font-weight: 600;
   font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+  color: #f4f2ff;
+  max-width: 680px;
 }
-
-.btn-primary-large:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 1rem 2rem;
-  border-radius: 30px;
-  font-weight: 600;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.6);
-}
-
-/* Molecule Animation */
-.hero-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.molecule-animation {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  animation: rotate 20s linear infinite;
-}
-
-.atom {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-}
-
-.atom-1 { top: 20px; left: 50%; transform: translateX(-50%); }
-.atom-2 { top: 50%; left: 20px; transform: translateY(-50%); }
-.atom-3 { top: 50%; right: 20px; transform: translateY(-50%); }
-
-.bond {
-  position: absolute;
-  height: 2px;
-  background: linear-gradient(90deg, #64b5f6, #42a5f5);
-  transform-origin: left center;
-}
-
-.bond-1 { top: 30px; left: 50%; width: 100px; transform: translateX(-50%) rotate(60deg); }
-.bond-2 { top: 50%; left: 30px; width: 100px; transform: translateY(-50%) rotate(-60deg); }
-.bond-3 { top: 50%; right: 30px; width: 100px; transform: translateY(-50%) rotate(60deg); }
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Features Section */
-.features {
-  padding: 6rem 0;
-  background: #f8fafc;
-}
-
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.section-title {
-  text-align: center;
-  font-size: 2.5rem;
+.eyebrow {
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
   font-weight: 700;
-  color: #1e3c72;
-  margin-bottom: 3rem;
 }
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
-}
-
-.feature-card {
+.hero-primary {
   background: white;
-  padding: 2.5rem 2rem;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #3f4091;
 }
-
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-.feature-icon {
-  margin-bottom: 1.5rem;
-  display: flex;
-  justify-content: center;
-}
-
-.icon-brain, .icon-microscope, .icon-chart, .icon-database {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hero-secondary {
   color: white;
-  font-size: 1.5rem;
+  border-color: #ffffffaa;
 }
-
-.feature-card h3 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #1e3c72;
-  margin-bottom: 1rem;
+.hero-secondary:hover {
+  background: #ffffff1a;
 }
-
-.feature-card p {
-  color: #64748b;
-  line-height: 1.6;
+.home-section {
+  padding-block: 2.5rem;
 }
-
-/* Technology Section */
-.technology {
-  padding: 6rem 0;
-  background: white;
-}
-
-.tech-content {
+.workflow ol {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-}
-
-.tech-text h2 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1e3c72;
-  margin-bottom: 1.5rem;
-}
-
-.tech-description {
-  font-size: 1.1rem;
-  line-height: 1.7;
-  color: #64748b;
-  margin-bottom: 2rem;
-}
-
-.tech-stats {
-  display: flex;
-  gap: 2rem;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat-number {
-  display: block;
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #667eea;
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-/* Neural Network Visualization */
-.tech-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.neural-network {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-}
-
-.layer {
-  display: flex;
-  flex-direction: column;
   gap: 1rem;
+  padding-left: 1.5rem;
+  margin-bottom: 0;
 }
-
-.node {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.node:nth-child(2) { animation-delay: 0.2s; }
-.node:nth-child(3) { animation-delay: 0.4s; }
-.node:nth-child(4) { animation-delay: 0.6s; }
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.2); opacity: 1; }
-}
-
-/* CTA Section */
 .cta {
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-  padding: 4rem 0;
-  color: white;
   text-align: center;
+  padding: 2rem;
+  border-radius: var(--radius);
+  background: #eef0fc;
 }
-
-.cta-content h2 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.cta-content p {
-  font-size: 1.2rem;
-  margin-bottom: 2.5rem;
-  opacity: 0.9;
-}
-
-.cta-actions {
-  display: flex;
-  gap: 1rem;
+.cta .actions {
   justify-content: center;
 }
-
-.btn-outline {
-  background: transparent;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 1rem 2rem;
-  border-radius: 30px;
-  font-weight: 600;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.molecule {
+  position: relative;
+  width: min(320px, 100%);
+  aspect-ratio: 1;
+  margin: auto;
 }
-
-.btn-outline:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.6);
+.orbit {
+  position: absolute;
+  inset: 15%;
+  border: 2px solid #ffffff80;
+  border-radius: 50%;
+}
+.orbit-one {
+  transform: rotate(35deg) scaleX(0.4);
+}
+.orbit-two {
+  transform: rotate(-35deg) scaleX(0.4);
+}
+.orbit-three {
+  transform: rotate(90deg) scaleX(0.4);
+}
+.nucleus {
+  position: absolute;
+  inset: 40%;
+  border-radius: 50%;
+  background: #fff0b3;
+  box-shadow: 0 0 60px #fff0b366;
+}
+.particle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: #d4f3ff;
+  border-radius: 50%;
+  animation: particle-glow 3s ease-in-out infinite alternate;
+}
+.particle-one {
+  top: 20%;
+  left: 26%;
+}
+.particle-two {
+  top: 50%;
+  right: 12%;
+}
+.particle-three {
+  bottom: 20%;
+  left: 23%;
+}
+@keyframes particle-glow {
+  to {
+    box-shadow: 0 0 25px #d4f3ff;
+  }
+}
+@media (max-width: 760px) {
+  .hero-layout {
+    grid-template-columns: 1fr;
+  }
+  .molecule {
+    width: 190px;
+  }
+  .hero {
+    padding-block: 2.5rem;
+  }
+  .home-section {
+    padding-block: 1.5rem;
+  }
 }
 </style>

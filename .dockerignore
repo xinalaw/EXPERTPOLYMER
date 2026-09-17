@@ -5,8 +5,10 @@ venv/
 
 # Python
 __pycache__/
+**/__pycache__/
 *.pyc
 .pytest_cache/
+**/.pytest_cache/
 .coverage
 
 # Секреты и локальные настройки
