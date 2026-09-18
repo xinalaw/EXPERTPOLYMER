@@ -42,7 +42,8 @@ nav {
   align-items: start;
   gap: 0.6rem;
 }
-a {
+a,
+a:hover {
   color: white;
 }
 @media (max-width: 768px) {
