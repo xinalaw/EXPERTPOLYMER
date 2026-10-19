@@ -1,6 +1,5 @@
-from datetime import date
+from datetime import date, datetime, time, timedelta, timezone
 
-from sqlalchemy import Date, cast
 from sqlalchemy.orm import Session
 
 from app.models.action_log import ActionLog
@@ -24,6 +23,10 @@ def get_action_logs(
         query = query.filter(ActionLog.actor_id == actor_id)
 
     if log_date is not None:
-        query = query.filter(cast(ActionLog.created_at, Date) == log_date)
+        day_start = datetime.combine(log_date, time.min, tzinfo=timezone.utc)
+        query = query.filter(
+            ActionLog.created_at >= day_start,
+            ActionLog.created_at < day_start + timedelta(days=1),
+        )
 
     return query.order_by(ActionLog.created_at.desc()).offset(offset).limit(limit).all()

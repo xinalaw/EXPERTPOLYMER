@@ -1,0 +1,125 @@
+.admin-shell {
+  max-width: 1320px;
+}
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.admin-tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--primary);
+  text-decoration: none;
+}
+.admin-tabs a.router-link-exact-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1.25rem;
+}
+.admin-toolbar .form-field {
+  flex: 1 1 180px;
+}
+.admin-toolbar .btn {
+  flex-shrink: 0;
+}
+.admin-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.925rem;
+}
+.admin-table caption {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 650;
+  background: var(--surface-muted);
+}
+.admin-table th,
+.admin-table td {
+  padding: 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.admin-table th {
+  background: var(--surface-muted);
+  font-weight: 650;
+}
+.admin-table tr:last-child td {
+  border-bottom: 0;
+}
+.admin-table td {
+  min-width: 110px;
+  overflow-wrap: anywhere;
+}
+.admin-table select {
+  min-width: 180px;
+}
+.admin-code {
+  font-family: ui-monospace, monospace;
+  word-break: break-word;
+  max-width: 350px;
+}
+.admin-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  font-size: 0.85rem;
+}
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+.admin-stat {
+  padding: 1.25rem;
+  background: var(--surface-muted);
+  border-radius: var(--radius);
+}
+.admin-stat dt {
+  color: var(--muted);
+}
+.admin-stat dd {
+  font-size: 2rem;
+  font-weight: 750;
+  margin: 0.5rem 0 0;
+  color: var(--primary);
+}
+@media (max-width: 480px) {
+  .admin-toolbar .btn {
+    width: 100%;
+  }
+  .admin-tabs a {
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+}

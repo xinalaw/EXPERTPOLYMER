@@ -64,7 +64,9 @@
 ├── requirements.txt        # база (без ultralytics/torch)
 ├── requirements-ml.txt     # база + ultralytics (полный ML-режим)
 ├── Dockerfile              # образ backend'а (контекст — корень)
-└── docker-compose.yml      # db + redis + backend + worker (+ frontend)
+├── docker-compose.yml      # db + redis + backend + worker + frontend
+├── docker-compose.mock.yml # быстрый вариант без torch
+└── scripts/docker-up.sh    # короткая команда запуска
 ```
 
 ---
@@ -119,6 +121,9 @@
 
 ## Установка
 
+Для Docker локальная установка Python и Node.js не требуется; переходите к
+[запуску через Docker](#через-docker-рекомендуется).
+
 ### 1. Зависимости
 
 ```bash
@@ -131,17 +136,17 @@ python -m venv .venv
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements-ml.txt
-pip install -e .
+pip install --no-deps -e .
 ```
 
 Лёгкий режим — API и фронтенд без нейросети (`ML_BACKEND` сам откатится на `mock`):
 
 ```bash
 pip install -r requirements.txt
-pip install -e .
+pip install --no-deps -e .
 ```
 
-`pip install -e .` делает пакет `expert_system` импортируемым из `backend/`.
+`pip install --no-deps -e .` делает пакет `expert_system` импортируемым из `backend/`.
 Без него backend всё равно найдёт ядро — `ml_service.py` добавляет корень
 проекта в `sys.path`, — но установка чище.
 
@@ -171,7 +176,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ```bash
 cd frontend
-npm install
+npm ci
 ```
 
 ---
@@ -180,27 +185,94 @@ npm install
 
 ### Через Docker (рекомендуется)
 
+Нужен Docker с Compose v2. Все команды ниже выполняются из корня проекта.
+В Docker Desktop для WSL включите **Settings → Resources → WSL Integration**
+для своего дистрибутива, затем проверьте `docker compose version`.
+Локальные Python, Node.js, PostgreSQL и Redis устанавливать не нужно.
+
+**Самый быстрый первый запуск, без загрузки torch:**
+
 ```bash
-docker compose up --build
+./scripts/docker-up.sh --mock
 ```
 
-После применения миграций первого администратора можно создать интерактивной
-командой (пароль не попадёт в историю shell):
+Скрипт запускает весь стек: новый frontend, API с админ-панелью, PostgreSQL,
+Redis и Celery. Он ждёт готовности сервисов; миграции применяются автоматически
+до запуска API и воркера. Файлы `.env` скрипт не создаёт и не меняет: для
+локального запуска достаточно встроенных значений. Свои настройки можно
+задать по [.env.example](.env.example); для постоянного окружения замените
+`SECRET_KEY` и пароль БД перед первым запуском.
+
+Без shell-скрипта (в том числе в PowerShell) та же команда:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.mock.yml up -d --build --wait
+```
+
+| Что открыть | Адрес |
+|---|---|
+| Интерфейс | http://localhost:5173 |
+| Админ-панель после входа администратором | http://localhost:5173/#/admin |
+| API / Swagger | http://localhost:8000/docs |
+| PostgreSQL с хоста | `localhost:5434` |
+| Redis с хоста | `localhost:6379` |
+
+В режиме `mock` нейросеть не запускается: анализ возвращает демонстрационную
+разметку без экспертной оценки. Этот режим подходит для проверки интерфейса,
+регистрации, ролей, истории и админ-панели.
+
+**Первый администратор** создаётся один раз после запуска:
 
 ```bash
 docker compose exec backend python -m app.commands.create_admin \
   --email admin@example.com --first-name System --last-name Administrator
 ```
 
-Команда откажется работать, если администратор уже существует. Дальнейшие роли
-назначаются в разделе «Пользователи» рабочей админ-панели.
+В PowerShell выполните команду одной строкой. Пароль вводится интерактивно
+дважды и не попадает в историю shell. Команда откажется создавать ещё одного
+администратора, если он уже существует. Войдите с этим email в интерфейсе;
+дальнейшие роли назначаются в разделе «Пользователи» админ-панели.
 
-Поднимутся PostgreSQL (порт 5434), Redis, backend (8000) и Celery-воркер.
-Миграции применяются автоматически. Фронтенд вынесен в отдельный профиль:
+**Повторный запуск:**
 
 ```bash
-docker compose --profile frontend up
+./scripts/docker-up.sh --mock
 ```
+
+Зависимости Python и `npm ci` кэшируются в образах; без изменения файлов
+зависимостей они повторно не скачиваются. Frontend включён в образ, поэтому
+эта же команда пересобирает его после изменений исходников. Для разработки
+с горячим обновлением запускайте Vite локально, как описано ниже.
+
+**Полный ML-режим** с CPU torch и настоящей сегментацией остаётся стандартным
+поведением основного Compose:
+
+```bash
+docker compose up -d --build --wait
+```
+
+Первый запуск дольше из-за загрузки CPU torch/torchvision и ultralytics.
+Используется `ML_BACKEND=auto`: при доступном ядре и весах работает нейросеть.
+Веса `data/models/yolo_particles_seg.pt` подключены с хоста; после их замены
+достаточно `docker compose restart backend worker`. Если ранее вы прописали
+`ML_BACKEND=mock` в `.env`,
+для настоящего анализа измените его на `auto` или `expert_system`.
+Для строгого режима задайте `ML_BACKEND=expert_system` и `ML_STRICT=1` в `.env`.
+Переход между mock и ML использует ту же БД и загруженные файлы.
+
+**Состояние, логи и остановка** для обоих режимов:
+
+```bash
+docker compose ps
+docker compose logs -f backend worker frontend
+docker compose down
+```
+
+`down` сохраняет именованные тома `postgres_data` (пользователи, роли, история)
+и `redis_data` (очередь), а также изображения в `backend/app/static/uploads`
+и `backend/app/static/processed`. Не добавляйте `-v`, если нужны данные.
+Пароль и имя существующей PostgreSQL БД сохраняются внутри тома: изменение
+`DB_*` в `.env` само по себе их не меняет.
 
 ### Быстрый запуск без Postgres, Redis и Docker
 

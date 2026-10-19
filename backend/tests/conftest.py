@@ -9,7 +9,7 @@ os.environ["ML_BACKEND"] = "mock"
 import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app.database.database import Base
@@ -30,6 +30,11 @@ if TEST_DATABASE_URL is None:
     raise RuntimeError("TEST_DATABASE_URL is not set in .env")
 
 engine = create_engine(TEST_DATABASE_URL)
+
+if engine.dialect.name == "sqlite":
+    @event.listens_for(engine, "connect")
+    def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
+        dbapi_connection.execute("PRAGMA foreign_keys=ON")
 
 TestingSessionLocal = sessionmaker(
     autocommit=False,

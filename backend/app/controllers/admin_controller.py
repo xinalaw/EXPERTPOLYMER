@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -57,4 +59,3 @@ def get_invites(db: Session, *, limit: int, offset: int):
         .limit(limit)
         .all()
     )
-from datetime import datetime, timezone

@@ -5,12 +5,18 @@ venv/
 
 # Python
 __pycache__/
+**/__pycache__/
 *.pyc
 .pytest_cache/
+**/.pytest_cache/
 .coverage
 
 # Секреты и локальные настройки
 .env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
 
 # Git
 .git/
@@ -19,6 +25,10 @@ __pycache__/
 # Фронтенд (собирается отдельным сервисом)
 frontend/node_modules/
 frontend/dist/
+frontend/dist-ssr/
+frontend/test-results/
+frontend/playwright-report/
+frontend/coverage/
 
 # Пользовательские файлы и результаты — монтируются томами
 backend/app/static/uploads/*
@@ -26,6 +36,8 @@ backend/app/static/processed/*
 data/results/
 data/images/
 expert_system.db
+backend/*.db
+backend/*.db-*
 
 # Прочее
 .idea/

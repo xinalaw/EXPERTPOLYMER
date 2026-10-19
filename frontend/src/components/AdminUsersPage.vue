@@ -1,71 +1,168 @@
-<script setup>
-import { computed, onMounted, ref } from 'vue'
-import { changeUserDirector, changeUserRole, getUsers } from '@/api/users'
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { changeUserDirector, changeUserRole, getAllUsers, type UserRole } from '@/api/users'
+import type { User } from '@/api/types'
+import { useAdminResource } from '@/composables/useAdminResource'
+import { auth } from '@/stores/auth'
+import AdminPagination from './admin/AdminPagination.vue'
 
-const props = defineProps({ currentUserId: { type: Number, default: null } })
-const users = ref([])
-const loading = ref(true)
-const error = ref('')
-const savingId = ref(null)
+const { data: users, loading, error, load } = useAdminResource(getAllUsers)
+const savingId = ref<number | null>(null)
+const saveError = ref('')
+const saved = ref('')
 const query = ref('')
-const directors = computed(() => users.value.filter((user) => user.role === 'director'))
+const page = ref(1)
+const pageSize = 25
+let active = true
+const busy = computed(() => loading.value || savingId.value !== null)
+const directors = computed(() => (users.value || []).filter((user) => user.role === 'director'))
 const filteredUsers = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase('ru-RU')
-  if (!needle) return users.value
-  return users.value.filter((user) => `${user.username} ${user.email} ${user.organization || ''}`.toLocaleLowerCase('ru-RU').includes(needle))
+  return (users.value || []).filter(
+    (user) =>
+      !needle ||
+      (user.username + ' ' + user.email + ' ' + (user.organization || ''))
+        .toLocaleLowerCase('ru-RU')
+        .includes(needle),
+  )
+})
+const visibleUsers = computed(() =>
+  filteredUsers.value.slice((page.value - 1) * pageSize, page.value * pageSize),
+)
+const hasNext = computed(() => filteredUsers.value.length > page.value * pageSize)
+watch(query, () => {
+  page.value = 1
 })
 
-async function loadUsers() {
-  loading.value = true; error.value = ''
-  try { users.value = await getUsers() } catch (requestError) { error.value = requestError.message } finally { loading.value = false }
+async function refresh() {
+  if (savingId.value !== null) return
+  page.value = 1
+  saveError.value = ''
+  saved.value = ''
+  await load()
 }
-
-async function save(user, request, rollback) {
-  savingId.value = user.id; error.value = ''
-  try { Object.assign(user, await request()) } catch (requestError) { rollback(); error.value = requestError.message } finally { savingId.value = null }
+async function save(user: User, request: () => Promise<User>) {
+  if (busy.value) return
+  savingId.value = user.id
+  saveError.value = ''
+  saved.value = ''
+  try {
+    const updated = await request()
+    if (!active) return
+    users.value = (users.value || []).map((item) => (item.id === updated.id ? updated : item))
+    saved.value = 'Изменения для ' + updated.username + ' сохранены.'
+  } catch (cause) {
+    if (active)
+      saveError.value = cause instanceof Error ? cause.message : 'Не удалось сохранить изменения'
+  } finally {
+    if (active) savingId.value = null
+  }
 }
-
-function updateRole(user, role) {
-  if (role === user.role) return
-  const previous = { role: user.role, director_id: user.director_id }
-  user.role = role
-  if (role !== 'researcher') user.director_id = null
-  save(user, () => changeUserRole(user.id, role), () => Object.assign(user, previous))
+function updateRole(user: User, event: Event) {
+  const select = event.target as HTMLSelectElement
+  const role = select.value as UserRole
+  select.value = user.role
+  if (role !== user.role && user.id !== auth.user?.id)
+    void save(user, () => changeUserRole(user.id, role))
 }
-
-function updateDirector(user, value) {
-  const previous = user.director_id
-  const directorId = value ? Number(value) : null
-  user.director_id = directorId
-  save(user, () => changeUserDirector(user.id, directorId), () => { user.director_id = previous })
+function updateDirector(user: User, event: Event) {
+  const select = event.target as HTMLSelectElement
+  const directorId = select.value ? Number(select.value) : null
+  select.value = String(user.director_id ?? '')
+  if (directorId !== (user.director_id ?? null) && user.role === 'researcher')
+    void save(user, () => changeUserDirector(user.id, directorId))
 }
-
-onMounted(loadUsers)
+onMounted(refresh)
+onBeforeUnmount(() => {
+  active = false
+})
 </script>
-
 <template>
-  <section class="admin-content">
+  <section class="panel" aria-labelledby="admin-users-title" :aria-busy="busy">
+    <h2 id="admin-users-title">Пользователи</h2>
     <div class="admin-toolbar">
-      <input v-model="query" class="admin-input" type="search" placeholder="Имя, email или организация">
-      <button class="admin-button" :disabled="loading" @click="loadUsers">Обновить</button>
+      <div class="form-field">
+        <label for="user-search">Поиск пользователей</label
+        ><input
+          id="user-search"
+          v-model="query"
+          type="search"
+          placeholder="Имя, email или организация"
+        />
+      </div>
+      <button class="btn btn-secondary" :disabled="busy" @click="refresh">Обновить</button>
     </div>
-    <p v-if="error" class="admin-message admin-error">{{ error }}</p>
-    <p v-if="loading" class="admin-message">Загрузка пользователей…</p>
-    <div v-else class="admin-table-wrap"><table class="admin-table">
-      <thead><tr><th>Пользователь</th><th>Email</th><th>Организация</th><th>Роль</th><th>Директор</th></tr></thead>
-      <tbody>
-        <tr v-for="user in filteredUsers" :key="user.id">
-          <td>{{ user.username }} <span v-if="user.id === props.currentUserId" class="admin-muted">(вы)</span></td>
-          <td>{{ user.email }}</td><td>{{ user.organization || '—' }}</td>
-          <td><select class="admin-input" :value="user.role" :disabled="savingId === user.id || user.id === props.currentUserId" @change="updateRole(user, $event.target.value)">
-            <option value="researcher">Исследователь</option><option value="director">Директор</option><option value="admin">Администратор</option>
-          </select></td>
-          <td><select class="admin-input" :value="user.director_id ?? ''" :disabled="user.role !== 'researcher' || savingId === user.id" @change="updateDirector(user, $event.target.value)">
-            <option value="">Не назначен</option><option v-for="director in directors" :key="director.id" :value="director.id">{{ director.username }}</option>
-          </select></td>
-        </tr>
-        <tr v-if="!filteredUsers.length"><td colspan="5" class="admin-muted">Пользователи не найдены</td></tr>
-      </tbody>
-    </table></div>
+    <p class="field-hint">
+      Собственную роль администратора изменить нельзя. Директора можно назначить исследователю.
+    </p>
+    <p v-if="error || saveError" class="notice error" role="alert">{{ error || saveError }}</p>
+    <p v-if="saved" class="notice" role="status">{{ saved }}</p>
+    <p v-if="loading" role="status">Загрузка пользователей…</p>
+    <template v-else-if="users">
+      <p class="muted">Найдено пользователей: {{ filteredUsers.length }}</p>
+      <div class="admin-table-wrap" role="region" aria-label="Список пользователей" tabindex="0">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th scope="col">Пользователь</th>
+              <th scope="col">Email</th>
+              <th scope="col">Организация</th>
+              <th scope="col">Роль</th>
+              <th scope="col">Директор</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in visibleUsers" :key="user.id">
+              <td>
+                {{ user.username }}
+                <span class="muted"
+                  >#{{ user.id }}{{ user.id === auth.user?.id ? ' (вы)' : '' }}</span
+                >
+              </td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.organization || '—' }}</td>
+              <td>
+                <select
+                  :aria-label="'Роль: ' + user.username"
+                  :value="user.role"
+                  :disabled="busy || user.id === auth.user?.id"
+                  @change="updateRole(user, $event)"
+                >
+                  <option value="researcher">Исследователь</option>
+                  <option value="director">Директор</option>
+                  <option value="admin">Администратор</option>
+                </select>
+              </td>
+              <td>
+                <select
+                  :aria-label="'Директор: ' + user.username"
+                  :value="user.director_id ?? ''"
+                  :disabled="busy || user.role !== 'researcher'"
+                  @change="updateDirector(user, $event)"
+                >
+                  <option value="">Не назначен</option>
+                  <option
+                    v-if="
+                      user.director_id &&
+                      !directors.some((director) => director.id === user.director_id)
+                    "
+                    :value="user.director_id"
+                  >
+                    #{{ user.director_id }} (роль изменена)
+                  </option>
+                  <option v-for="director in directors" :key="director.id" :value="director.id">
+                    {{ director.username }} #{{ director.id }}
+                  </option>
+                </select>
+              </td>
+            </tr>
+            <tr v-if="!visibleUsers.length">
+              <td colspan="5" class="muted">Пользователи не найдены</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <AdminPagination :page="page" :has-next="hasNext" :loading="busy" @change="page = $event" />
+    </template>
   </section>
 </template>
