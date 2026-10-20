@@ -6,15 +6,16 @@
         <p>Анализ структуры композитных материалов.</p>
         <p>© {{ new Date().getFullYear() }} Expert Polymer</p>
       </div>
-      <nav aria-label="Дополнительная навигация">
-        <RouterLink to="/about">О системе</RouterLink
-        ><RouterLink to="/contacts">Контакты</RouterLink
-        ><RouterLink to="/settings">Настройки</RouterLink
-        ><RouterLink to="/usage">Использование и данные</RouterLink>
-      </nav>
-      <div>
-        <a href="mailto:info@expertpolymer.ru">info@expertpolymer.ru</a>
-        <p>Казань, ул. Петербургская, 52</p>
+      <div class="footer-support">
+        <img
+          class="footer-support-logo"
+          src="/logo.jpg"
+          alt="Фонд содействия инновациям"
+          width="1366"
+          height="828"
+          loading="lazy"
+        />
+        <p>Проект разработан при поддержке Фонда содействия инновациям (ФСИ).</p>
       </div>
     </div>
   </footer>
@@ -28,7 +29,8 @@
 }
 .footer-content {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
   gap: 2rem;
 }
 .footer-brand {
@@ -36,20 +38,32 @@
   font-weight: 700;
   color: white;
 }
-nav {
+.footer-support {
   display: flex;
-  flex-direction: column;
-  align-items: start;
-  gap: 0.6rem;
+  align-items: center;
+  gap: 1.25rem;
 }
-a,
-a:hover {
-  color: white;
+.footer-support-logo {
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+.footer-support p {
+  margin: 0;
 }
 @media (max-width: 768px) {
   .footer-content {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+}
+@media (max-width: 480px) {
+  .footer-support {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>
