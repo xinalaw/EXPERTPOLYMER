@@ -1,21 +1,35 @@
 <template>
   <footer class="footer">
     <div class="container footer-content">
-      <div>
+      <div class="footer-info">
         <p class="footer-brand">Expert Polymer</p>
         <p>Анализ структуры композитных материалов.</p>
-        <p>© {{ new Date().getFullYear() }} Expert Polymer</p>
+        <p class="footer-copyright">© {{ new Date().getFullYear() }} Expert Polymer</p>
       </div>
       <div class="footer-support">
-        <img
-          class="footer-support-logo"
-          src="/logo.jpg"
-          alt="Фонд содействия инновациям"
-          width="1366"
-          height="828"
-          loading="lazy"
-        />
-        <p>Проект разработан при поддержке Фонда содействия инновациям (ФСИ).</p>
+        <div class="footer-support-logos">
+          <img
+            class="footer-support-logo"
+            src="/logo.jpg"
+            alt="Фонд содействия инновациям"
+            width="1366"
+            height="828"
+            loading="lazy"
+          />
+          <img
+            class="footer-support-logo"
+            src="/logo2.png"
+            alt="Платформа университетского технологического предпринимательства"
+            width="2535"
+            height="1976"
+            loading="lazy"
+          />
+        </div>
+        <p>
+          Проект реализован при поддержке Фонда содействия инновациям в рамках программы
+          «Студенческий стартап» мероприятия «Платформа университетского технологического
+          предпринимательства» федерального проекта «Технологии»
+        </p>
       </div>
     </div>
   </footer>
@@ -24,14 +38,25 @@
 .footer {
   background: var(--nav-gradient);
   color: #e3edfb;
-  padding: 2.5rem 0;
+  padding: clamp(2rem, 4vw, 3rem) 0;
   margin-top: auto;
 }
 .footer-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.5fr);
+  align-items: start;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+.footer-info p {
+  margin: 0;
+}
+.footer-info > p + p {
+  margin-top: 0.75rem;
+}
+.footer-info > .footer-copyright {
+  margin-top: 1.75rem;
+  font-size: 0.85rem;
+  color: #b7c9e2;
 }
 .footer-brand {
   font-size: 1.3rem;
@@ -39,31 +64,54 @@
   color: white;
 }
 .footer-support {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
+}
+.footer-support-logos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  width: min(100%, 340px);
+  padding: 0.5rem;
+  background: white;
+  border: 1px solid #e3e9f2;
+  border-radius: 12px;
+  overflow: hidden;
 }
 .footer-support-logo {
   display: block;
-  width: 180px;
-  max-width: 100%;
-  height: auto;
-  flex-shrink: 0;
-  border-radius: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: clamp(72px, 8vw, 92px);
+  object-fit: contain;
+  padding-inline: 0.5rem;
+}
+.footer-support-logo + .footer-support-logo {
+  border-left: 1px solid #e3e9f2;
 }
 .footer-support p {
   margin: 0;
+  max-width: 65ch;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  text-wrap: pretty;
 }
 @media (max-width: 768px) {
   .footer-content {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.75rem;
+  }
+  .footer-support {
+    padding-top: 1.75rem;
+    border-top: 1px solid rgb(255 255 255 / 16%);
   }
 }
-@media (max-width: 480px) {
+@media (max-width: 540px) {
   .footer-support {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 1fr;
   }
 }
 </style>
