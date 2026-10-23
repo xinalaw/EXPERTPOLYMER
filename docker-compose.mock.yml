@@ -1,0 +1,13 @@
+# Добавляется к основному Compose только для разработки без нейросети.
+# Названия сервисов и томов совпадают: пользователи, история и файлы сохраняются.
+services:
+  backend:
+    build:
+      target: runtime
+    environment:
+      ML_BACKEND: mock
+  worker:
+    build:
+      target: runtime
+    environment:
+      ML_BACKEND: mock

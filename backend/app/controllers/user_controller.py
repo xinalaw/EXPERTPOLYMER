@@ -102,7 +102,12 @@ def update_user_director(
     return user
 
 
-def update_user_role(user_id: int, role_data: UserRoleUpdateSchema, db: Session):
+def update_user_role(
+    user_id: int,
+    role_data: UserRoleUpdateSchema,
+    db: Session,
+    current_admin: User,
+):
     user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
@@ -111,10 +116,31 @@ def update_user_role(user_id: int, role_data: UserRoleUpdateSchema, db: Session)
             detail="Пользователь не найден",
         )
 
-    setattr(user, "role", role_data.role)
+    old_role = str(user.role)
+    new_role = role_data.role
+
+    if user.id == current_admin.id and old_role == "admin" and new_role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Нельзя снять роль администратора с самого себя",
+        )
+
+    user.role = new_role
+
+    if new_role != "researcher":
+        user.director_id = None
 
     db.commit()
     db.refresh(user)
+
+    create_action_log(
+        db=db,
+        actor_id=int(current_admin.id),
+        action="CHANGE_USER_ROLE",
+        target_type="user",
+        target_id=user.id,
+        details={"old_role": old_role, "new_role": new_role},
+    )
 
     return user
 

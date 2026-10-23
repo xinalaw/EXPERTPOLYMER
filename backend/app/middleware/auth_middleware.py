@@ -5,21 +5,13 @@ from sqlalchemy.orm import Session
 
 import os
 
-from app.database.database import SessionLocal
+from app.database.dependencies import get_db
 from app.models.user import User
 
 bearer_scheme = HTTPBearer()
 
 SECRET_KEY = os.getenv("SECRET_KEY", "secret")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_current_user(
@@ -35,15 +27,16 @@ def get_current_user(
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
-        user_id: str | None = payload.get("sub")
-
-        if user_id is None:
+        user_id = int(payload.get("sub"))
+        # User IDs are PostgreSQL INTEGERs. Reject malformed subjects before
+        # passing them to the driver (SQLite also rejects oversized integers).
+        if not 1 <= user_id <= 2_147_483_647:
             raise credentials_exception
 
-    except JWTError:
+    except (JWTError, TypeError, ValueError):
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = db.query(User).filter(User.id == user_id).first()
 
     if user is None:
         raise credentials_exception

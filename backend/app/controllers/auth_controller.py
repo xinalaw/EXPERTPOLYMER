@@ -1,18 +1,9 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.database.database import SessionLocal
 from app.models.user import User
 from app.schemas.user import UserRegisterSchema, UserLoginSchema
 from app.utils.security import hash_password, verify_password, create_access_token
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def register_user(user_data: UserRegisterSchema, db: Session):

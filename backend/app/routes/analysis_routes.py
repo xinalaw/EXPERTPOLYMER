@@ -10,7 +10,7 @@ from app.controllers.analysis_controller import (
     get_analysis_history,
     delete_analysis_result,
 )
-from app.controllers.auth_controller import get_db
+from app.database.dependencies import get_db
 from app.middleware.auth_middleware import get_current_user
 from app.models.user import User
 from app.schemas.analysis import AnalysisResultResponseSchema

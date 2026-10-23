@@ -24,7 +24,6 @@ Backend часть интеллектуальной системы анализ�
 - Github Actions CI
 - Redis
 - Celery
-- WebSocket
 
 ---
 
@@ -81,12 +80,14 @@ Backend часть интеллектуальной системы анализ�
 - фоновые задачи Celery 
 - Redis
 - отслеживание статуса задач
-- обновление WebSocket в реальном времени
+- защищённый polling статуса задачи
 
 ---
 
 ## Administration
 
+- dashboard со сводной статистикой
+- единая Vue-панель для пользователей, анализов, задач, инвайтов и журнала
 - audit logs
 - pagination
 - filtering
@@ -117,15 +118,11 @@ backend/            # ← вы здесь; .github/, requirements.txt и Dockerf
 │   ├── test_invites.py
 │   └── test_analysis.py
 │
-├── docs/
-│   └── postman/
-│
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
 ├── pytest.ini
 └── README.md
 ```
+
+`Dockerfile`, `docker-compose.yml`, `requirements*.txt` и `docs/` находятся в корне репозитория.
 
 ---
 
@@ -133,9 +130,23 @@ backend/            # ← вы здесь; .github/, requirements.txt и Dockerf
 
 ## Запуск
 
+Из корня репозитория (миграции выполняются автоматически):
+
 ```bash
-docker compose up --build
+./scripts/docker-up.sh --mock
 ```
+
+Быстрый режим использует заглушку анализа без загрузки PyTorch и весов YOLO.
+Для полного ML-стека и остальных команд см. [корневой README](../README.md).
+
+Первого администратора создайте один раз; команда интерактивно запросит пароль:
+
+```bash
+docker compose exec backend python -m app.commands.create_admin --email admin@example.com
+```
+
+Войдите с этой учётной записью в интерфейсе `http://localhost:5173` и откройте
+`/admin`. Последующим пользователям роли назначаются в панели администратора.
 
 ---
 
@@ -232,6 +243,7 @@ scientific_system
 ## 6. Alembic migrations
 
 ```bash
+cd backend
 alembic upgrade head
 ```
 
@@ -271,7 +283,6 @@ GET  /api/auth/me
 POST   /api/analyze
 POST   /api/analyze/async
 GET    /api/analyze/tasks/{task_id}
-WS     /api/ws/analyze/tasks/{task_id}
 GET    /api/history
 GET    /api/results/{id}
 DELETE /api/results/{id}
@@ -296,7 +307,23 @@ GET /api/users
 GET /api/users/search
 PATCH /api/users/{id}/role
 PATCH /api/users/{id}/director
+DELETE /api/users/{id}
 ```
+
+---
+
+## Admin panel
+
+```text
+GET /api/admin/dashboard
+GET /api/admin/tasks
+GET /api/admin/invites
+GET /api/director/researchers
+```
+
+`/api/admin/*`, управление пользователями и журнал доступны только `admin`.
+История анализов фильтруется по правам текущего пользователя; `date=YYYY-MM-DD`
+задаёт календарный день UTC, `limit` и `offset` управляют страницами.
 
 ---
 
@@ -432,7 +459,7 @@ PENDING
 PROCESSING
 RETRY
 SUCCESS
-FAILED
+FAILURE
 ```
 # Testing 
 
@@ -445,11 +472,16 @@ Postman API сценарии:
 
 ## Pytest
 
-Запуск тестов:
+Из `backend/` с отдельной тестовой базой (тесты пересоздают её таблицы):
 
-```text
+```bash
+export TEST_DATABASE_URL=postgresql+psycopg2://postgres:admin@localhost:5434/scientific_system_test
 pytest
 ```
+
+Для проверки API без PostgreSQL можно использовать
+`TEST_DATABASE_URL=sqlite:////tmp/expertpolymer-test.db pytest`.
+
 ## Coverage
 
 Запуск тестов с coverage:

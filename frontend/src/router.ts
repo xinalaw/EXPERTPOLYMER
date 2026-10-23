@@ -42,6 +42,49 @@ export const router = createRouter({
       meta: { title: 'Профиль', requiresAuth: true },
     },
     {
+      path: '/admin',
+      component: () => import('./components/AdminPanelPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        {
+          path: '',
+          name: 'admin',
+          component: () => import('./components/admin/AdminDashboardPage.vue'),
+          meta: { title: 'Обзор системы' },
+        },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('./components/AdminUsersPage.vue'),
+          meta: { title: 'Пользователи' },
+        },
+        {
+          path: 'history',
+          name: 'admin-history',
+          component: () => import('./components/admin/AdminHistoryPage.vue'),
+          meta: { title: 'История анализов' },
+        },
+        {
+          path: 'tasks',
+          name: 'admin-tasks',
+          component: () => import('./components/admin/AdminTasksPage.vue'),
+          meta: { title: 'Задачи' },
+        },
+        {
+          path: 'invites',
+          name: 'admin-invites',
+          component: () => import('./components/admin/AdminInvitesPage.vue'),
+          meta: { title: 'Приглашения' },
+        },
+        {
+          path: 'logs',
+          name: 'admin-logs',
+          component: () => import('./components/admin/AdminLogsPage.vue'),
+          meta: { title: 'Журнал действий' },
+        },
+      ],
+    },
+    {
       path: '/settings',
       name: 'settings',
       component: () => import('./components/SettingsPage.vue'),
@@ -82,6 +125,7 @@ router.beforeEach(async (to) => {
   if (to.meta.requiresAuth) {
     await restoreSession()
     if (!auth.user) return { name: 'login', query: { redirect: to.fullPath } }
+    if (to.meta.requiresAdmin && auth.user.role !== 'admin') return { name: 'profile' }
   }
 })
 router.afterEach((to) => {

@@ -1,353 +1,487 @@
-# Интеллектуальная система анализа полимерных порошков
+# Expert Polymer — анализ полимерных порошков
 
-Объединённый проект: веб-система с ролевым доступом и очередями задач + ядро
-экспертной системы, которое по СЭМ-изображению определяет пригодность
-полимерного порошка для аддитивного производства.
+[Описание проекта](#описание-проекта) · [Установка](#установка) · [Быстрый запуск](#быстрый-запуск)
 
-Пользователь загружает снимок → частицы сегментируются нейросетью YOLOv8-seg →
-по контурам считаются морфологические характеристики → нечёткая экспертная
-подсистема (Mamdani) выносит заключение о пригодности материала.
+## Описание проекта
 
----
+Expert Polymer — система анализа СЭМ-изображений полимерных порошков для
+оценки их пригодности к аддитивному производству.
 
-## Из чего собран проект
+Пользователь загружает изображение в браузере. YOLOv8-seg выделяет частицы,
+система рассчитывает их морфологические характеристики, а нечёткая экспертная
+подсистема Mamdani формирует оценку от 0 до 100 и заключение о пригодности
+материала. Результат и изображение с разметкой сохраняются в истории.
 
-Проект получен слиянием трёх независимых кодовых баз:
+### Возможности
 
-| Было | Стало | Что это |
-|---|---|---|
-| `Expert_system_diploma/` | `expert_system/`, `cli.py`, `data/`, `tests/` | Ядро: YOLOv8-seg, морфометрия, нечёткий вывод, SQLite-хранилище, CLI |
-| `scientific-system-backend` | `backend/` | FastAPI: JWT, RBAC, инвайты, Celery + Redis, WebSocket, PostgreSQL |
-| `expert-polymer` | `frontend/` | Vue 3 + Vite: загрузка снимка, история, админ-часть |
+- Сегментация частиц и определение их классов: дендритные, осколочные,
+  губчатые, сферические и каплевидные.
+- Расчёт состава порошка, округлости, размеров частиц и дисперсности.
+- Экспертные заключения: материал пригоден, условно пригоден или непригоден.
+- Регистрация, авторизация, история исследований и выгрузка JSON-отчётов.
+- Синхронный анализ через API и фоновые задачи Celery с отслеживанием статуса.
+- Админ-панель: обзор системы, пользователи, история анализов, задачи,
+  инвайты и журнал действий.
+- Анализ из командной строки без веб-интерфейса.
 
-Ключевое изменение при слиянии: раньше backend возвращал **заглушку** —
-`ml_service.py` рисовал на изображении один прямоугольник «Mock particle».
-Теперь тот же модуль вызывает настоящее ядро и отдаёт в API состав порошка,
-морфологию и вердикт экспертной системы.
+### Роли
 
----
+| Роль         | Доступ                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| `admin`      | Все исследования, управление ролями и назначением директоров, админ-панель и журнал действий |
+| `director`   | Исследователи своей группы, их история и invite-коды                                         |
+| `researcher` | Загрузка изображений и собственные исследования                                              |
 
-## Структура
+Новые пользователи регистрируются как исследователи. Первого администратора
+создаёт отдельная команда; дальнейшие роли назначаются в админ-панели.
 
-```
-.
-├── expert_system/          # ядро экспертной системы (Python-пакет)
-│   ├── config.py           #   классы частиц, пути, пороги (+ override через env)
-│   ├── detector.py         #   сегментация YOLOv8-seg
-│   ├── metrics.py          #   округлость, эквивалентный диаметр, дисперсность
-│   ├── fuzzy_expert.py     #   нечёткий вывод Mamdani (scikit-fuzzy)
-│   ├── analyzer.py         #   фасад: полный конвейер анализа
-│   ├── storage.py          #   SQLite-хранилище для CLI-режима
-│   └── visualization.py    #   отрисовка боксов и масок
-│
-├── backend/                # веб-часть (FastAPI)
-│   ├── app/
-│   │   ├── routes/ controllers/ services/ models/ schemas/
-│   │   ├── services/ml_service.py   # ← стык веб-части и ядра
-│   │   ├── tasks/          #   Celery: асинхронный анализ
-│   │   └── static/         #   uploads/ и processed/
-│   ├── alembic/            #   миграции БД
-│   └── tests/              #   тесты API
-│
-├── frontend/               # Vue 3 + Vite
-│   └── src/api/            #   клиент к /api/* и WebSocket
-│
-├── data/
-│   ├── models/yolo_particles_seg.pt   # веса модели
-│   ├── images/             #   примеры СЭМ-снимков
-│   └── results/            #   выгрузки CLI
-│
-├── tests/                  # тесты ядра (метрики, нечёткий вывод)
-├── examples/               # автономный пример интеграции ядра
-├── docs/postman/           # коллекция Postman для API
-├── cli.py                  # запуск анализа из командной строки
-├── requirements.txt        # база (без ultralytics/torch)
-├── requirements-ml.txt     # база + ultralytics (полный ML-режим)
-├── Dockerfile              # образ backend'а (контекст — корень)
-└── docker-compose.yml      # db + redis + backend + worker (+ frontend)
+### Архитектура
+
+```text
+Vue 3 + TypeScript
+        │ HTTP / JWT
+        ▼
+FastAPI ─────── PostgreSQL: пользователи, роли, история, задачи, журнал
+        │
+        ├── Синхронный анализ
+        └── Redis → Celery: фоновый анализ
+                        │
+                        ▼
+               Ядро expert_system
+               YOLOv8-seg → метрики → Mamdani
 ```
 
----
+Веб-интерфейс отправляет анализ синхронно. Фоновый режим доступен через
+`POST /api/analyze/async`, его статус — через `GET /api/analyze/tasks/{task_id}`.
+Оба режима используют одно ядро анализа.
 
-## Как связаны части
-
-```
-        браузер (frontend/, Vue 3)
-               │  POST /api/analyze     JWT
-               ▼
-        backend/app/routes/analysis_routes.py
-               │
-               ▼
-        backend/app/services/ml_service.py     ← стык
-               │  ML_BACKEND=auto|expert_system|mock
-               ▼
-        expert_system.Analyzer.analyze()
-               │
-      ┌────────┴─────────┐
-      ▼                  ▼
-  detector.py        metrics.py
-  (YOLOv8-seg)       (округлость, диаметр,
-      │               дисперсность)
-      └────────┬─────────┘
-               ▼
-        fuzzy_expert.py  →  score 0–100, вердикт
-               │
-               ▼
-        result_data в PostgreSQL + processed-изображение
+```text
+expert_system/             # Сегментация, морфометрия, нечёткий вывод, CLI-хранилище
+backend/                   # FastAPI, роли, админские API, Celery, миграции
+frontend/                  # Vue 3, TypeScript, Vue Router, админ-панель
+data/models/               # Веса YOLOv8-seg
+data/images/               # Пример СЭМ-изображения
+data/results/              # Результаты CLI
+tests/                     # Тесты ядра
+backend/tests/             # Тесты API
+frontend/e2e/              # Браузерные тесты
+docs/                      # Методика анализа и документация интеграции
+cli.py                     # Точка входа для CLI
+requirements.txt           # Python-зависимости без torch и ultralytics
+requirements-ml.txt        # Полный набор Python-зависимостей
+Dockerfile                 # Образы backend, worker и frontend
+docker-compose.yml         # Полный стек
+docker-compose.mock.yml    # Вариант без нейросети
+scripts/docker-up.sh       # Запуск с автоматической сборкой
 ```
 
-Асинхронный путь (`POST /api/analyze/async`) устроен так же, но вызов ядра
-происходит в Celery-воркере, а статус задачи уходит на фронт по WebSocket.
+### Режимы анализа
 
----
+| `ML_BACKEND`    | Поведение                                                   |
+| --------------- | ----------------------------------------------------------- |
+| `expert_system` | Настоящий анализ; требует torch, ultralytics и веса модели  |
+| `auto`          | Настоящий анализ при доступном ядре и весах; иначе заглушка |
+| `mock`          | Демонстрационная разметка без нейросети и экспертной оценки |
 
-## Режимы работы ядра
+Для полного режима инструкции ниже используют `ML_BACKEND=expert_system`
+и `ML_STRICT=1`: ошибка модели завершает анализ с ошибкой, без подмены
+результата заглушкой. GPU не требуется: предусмотрена CPU-сборка PyTorch.
 
-Переключаются переменной `ML_BACKEND`:
+### Подробная документация
 
-| Значение | Поведение |
-|---|---|
-| `auto` (по умолчанию) | Ядро, если пакет импортируется и найдены веса; иначе заглушка |
-| `expert_system` | Только ядро; если недоступно — ошибка при старте анализа |
-| `mock` | Только заглушка. Нужна для CI, тестов API и разработки фронтенда без torch |
-
-Дополнительно `ML_STRICT=1` запрещает молчаливый откат на заглушку при ошибке
-ядра — задача завершится с ошибкой, а не подсунет фиктивный результат.
-
----
+- [Методика экспертной системы](docs/expert_system.md): метрики, нечёткие правила,
+  формат результатов и использование ядра как библиотеки.
+- [Backend](backend/README.md): API, роли, миграции и тесты.
+- [Frontend](frontend/README.md): интерфейс, маршруты, сборка и тесты.
+- [Интеграция админ-панели](docs/admin_integration_report.md).
+- [Коллекция Postman](docs/postman/).
 
 ## Установка
 
-### 1. Зависимости
+Выполняется один раз и повторяется при обновлении зависимостей или образов.
+Все команды этого раздела начинаются **из корня репозитория** — папки,
+где находится `docker-compose.yml`.
+
+Выбери способ подготовки:
+
+| Способ                                                        | Что установить на компьютер                                                           |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Весь проект в Docker — основной вариант                       | Docker с Compose v2                                                                   |
+| Локальные API, worker и frontend; PostgreSQL и Redis в Docker | Python 3.11+, Node.js из ветки 22 версии 22.12+ либо из ветки 24, Docker с Compose v2 |
+| Локальный деморежим на SQLite                                 | Python 3.11+ и тот же Node.js; Docker не нужен                                        |
+
+Для WSL включи свой дистрибутив в **Docker Desktop → Settings → Resources →
+WSL Integration**. Для локальной установки в Linux также нужны системные
+библиотеки OpenCV; в Ubuntu/Debian это пакеты `libgl1` и `libglib2.0-0`.
+
+### 1. Файл настроек
+
+Создай `.env` из примера, сохранив существующий файл, если он уже есть.
+
+**Linux / macOS / WSL:**
 
 ```bash
+test -f .env || cp .env.example .env
+```
+
+**Windows PowerShell:**
+
+```powershell
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+```
+
+Для полного функционала установи в `.env`:
+
+```dotenv
+ML_BACKEND=expert_system
+ML_STRICT=1
+```
+
+Задай собственный `SECRET_KEY`. Настройки PostgreSQL и Redis в
+[.env.example](.env.example) уже подходят для команд ниже: PostgreSQL доступен
+с хоста на порту `5434`, Redis — на `6379`. При изменении пользователя,
+пароля или имени БД обнови и `DB_*`, и локальный `DATABASE_URL`.
+Внутри Docker адреса БД и Redis задаёт Compose.
+
+Веса `data/models/yolo_particles_seg.pt` включены в репозиторий.
+Для локального запуска с другой моделью задай абсолютный `ES_MODEL_PATH`;
+для стандартных весов оставь эту переменную незаданной. В Docker путь модели
+фиксирован в Compose: для замены весов обнови файл
+`data/models/yolo_particles_seg.pt`, сохранив его имя.
+
+### 2. Установка для Docker
+
+Локальные Python, Node.js и venv для этого варианта не нужны.
+
+**Полный функционал, включая нейросеть:**
+
+```bash
+docker compose pull db redis
+docker compose build
+```
+
+Первая сборка загружает CPU-версии torch/torchvision и ultralytics.
+Зависимости кэшируются в образах.
+
+**Альтернатива — без torch, для разработки интерфейса и админки:**
+
+```bash
+docker compose pull db redis
+docker compose -f docker-compose.yml -f docker-compose.mock.yml build
+```
+
+Выбери один вариант сборки. При переходе между полным и демонстрационным
+режимами повтори соответствующую сборку. Затем переходи к
+[быстрому запуску](#быстрый-запуск).
+
+### 3. Установка для локального запуска
+
+Этот подраздел нужен, если Python и frontend будут работать на компьютере.
+Для варианта целиком в Docker его можно пропустить.
+
+#### Виртуальное окружение
+
+**Linux / macOS / WSL:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+```
+
+**Windows PowerShell:**
+
+```powershell
 python -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 ```
 
-Полный режим с сегментацией (тянет torch, ~2 ГБ):
+Если PowerShell запрещает активацию скрипта, разреши её для текущего терминала:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+#### Python-зависимости — выбери один набор
+
+**Полный функционал с настоящей сегментацией:**
 
 ```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install -r requirements-ml.txt
-pip install -e .
+python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -r requirements-ml.txt
+python -m pip install --no-deps -e .
 ```
 
-Лёгкий режим — API и фронтенд без нейросети (`ML_BACKEND` сам откатится на `mock`):
+**Альтернатива — без torch и ultralytics:**
 
 ```bash
-pip install -r requirements.txt
-pip install -e .
+python -m pip install -r requirements.txt
+python -m pip install --no-deps -e .
 ```
 
-`pip install -e .` делает пакет `expert_system` импортируемым из `backend/`.
-Без него backend всё равно найдёт ядро — `ml_service.py` добавляет корень
-проекта в `sys.path`, — но установка чище.
+`--no-deps` обязателен для лёгкого варианта: зависимости уже установлены
+из requirements, а обычный `pip install -e .` дополнительно подтянет нейросеть.
 
-### 2. Веса модели
-
-Файл `data/models/yolo_particles_seg.pt` уже лежит в репозитории. При замене
-модели путь можно переопределить переменной `ES_MODEL_PATH`.
-
-### 3. Окружение
-
-```bash
-copy .env.example .env      # Windows
-cp .env.example .env        # Linux / macOS
-```
-
-Заполнить `DATABASE_URL`, `SECRET_KEY`, при необходимости `TEST_DATABASE_URL`.
-Значение `SECRET_KEY` можно сгенерировать:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
-
-Для фронтенда есть свой `frontend/.env.example`, но в режиме разработки он не
-обязателен — Vite проксирует запросы на backend сам.
-
-### 4. Фронтенд
+#### Frontend
 
 ```bash
 cd frontend
-npm install
+npm ci
+cd ..
 ```
 
----
+Отдельный `.env` для frontend не нужен: Vite проксирует `/api` и `/static`
+на backend. При необходимости цель прокси задаётся через `API_PROXY_TARGET`.
 
-## Запуск
-
-### Через Docker (рекомендуется)
+Для полного локального варианта подготовь образы инфраструктуры:
 
 ```bash
-docker compose up --build
+docker compose pull db redis
 ```
 
-Поднимутся PostgreSQL (порт 5434), Redis, backend (8000) и Celery-воркер.
-Миграции применяются автоматически. Фронтенд вынесен в отдельный профиль:
+## Быстрый запуск
+
+Команды рассчитаны на выполненную [установку](#установка).
+**Каждый новый терминал открывай в корне репозитория**, если не указано иное.
+Устанавливать зависимости повторно не нужно.
+
+### 1. Полный запуск через Docker — основной вариант
+
+Поднимает весь функционал: настоящую сегментацию и экспертную оценку,
+frontend, API, админ-панель, PostgreSQL, Redis и Celery.
 
 ```bash
-docker compose --profile frontend up
+docker compose up -d --wait
 ```
 
-### Быстрый запуск без Postgres, Redis и Docker
+Миграции применяются автоматически. Venv активировать не нужно: Python
+работает внутри контейнеров. Для повторного запуска используй ту же команду.
 
-Если ничего из этого не установлено, система поднимается на SQLite. Работает
-всё, кроме асинхронного анализа через Celery (`/api/analyze/async` и WebSocket) —
-для него нужен Redis. Обычный синхронный `/api/analyze` доступен.
-
-Создать базу (один раз):
+После первого запуска создай администратора:
 
 ```bash
+docker compose exec backend python -m app.commands.create_admin --email admin@example.com
+```
+
+Пароль вводится интерактивно дважды. Если администратор уже существует,
+повторять команду не нужно. Войди с этим email и открой «Админ-панель»
+в основном меню.
+
+| Сервис                   | Адрес                         |
+| ------------------------ | ----------------------------- |
+| Интерфейс                | http://localhost:5173         |
+| Админ-панель после входа | http://localhost:5173/#/admin |
+| API / Swagger            | http://localhost:8000/docs    |
+
+### 2. Полный локальный запуск с venv
+
+PostgreSQL и Redis работают в Docker, остальные процессы — локально.
+Нужны полный набор Python-зависимостей и настройки полного режима из раздела
+«Установка». API запускай перед worker, чтобы сначала применились миграции.
+
+#### Терминал 1 — PostgreSQL и Redis
+
+```bash
+docker compose up -d --wait db redis
+```
+
+Команда работает в фоне; после её завершения терминал можно использовать
+для создания администратора.
+
+#### Терминал 2 — API
+
+**Linux / macOS / WSL:**
+
+```bash
+source .venv/bin/activate
 cd backend
-$env:DATABASE_URL="sqlite:///./dev.db"
-python -m app.database.create_tables
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Alembic здесь не нужен: таблицы создаются напрямую из моделей.
+**Windows PowerShell:**
 
-Запустить backend:
+```powershell
+.\.venv\Scripts\Activate.ps1
+cd backend
+python -m alembic upgrade head
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+#### Терминал 3 — Celery worker
+
+**Linux / macOS / WSL:**
 
 ```bash
+source .venv/bin/activate
 cd backend
-$env:DATABASE_URL="sqlite:///./dev.db"
-python -m uvicorn app.main:app --port 8000
+python -m celery -A app.tasks.celery_app worker --loglevel=info
 ```
 
-Во втором терминале — фронтенд:
+**Windows PowerShell:**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+cd backend
+python -m celery -A app.tasks.celery_app worker --loglevel=info --pool=solo
+```
+
+#### Терминал 4 — frontend
+
+Venv для Node.js не нужен. Эти команды одинаковы для Bash и PowerShell:
 
 ```bash
 cd frontend
 npm run dev -- --host 127.0.0.1
 ```
 
-Открыть http://127.0.0.1:5173.
+Интерфейс: http://127.0.0.1:5173. API / Swagger: http://127.0.0.1:8000/docs.
 
-Про `--host 127.0.0.1`: без него Vite на Windows иногда слушает только IPv6
-(`::1`), и браузер, резолвящий `localhost` в `127.0.0.1`, не достучится.
+#### Первый администратор — один раз
 
-Чтобы не выставлять `DATABASE_URL` каждый раз, раскомментируйте строку
-`DATABASE_URL=sqlite:///./dev.db` в `.env`.
+В свободном терминале из корня проекта:
 
-### Локально с Postgres
-
-Backend (рабочая директория — `backend/`, оттуда резолвятся `app/static` и `alembic.ini`):
+**Linux / macOS / WSL:**
 
 ```bash
-cd backend && alembic upgrade head && uvicorn app.main:app --reload
+source .venv/bin/activate
+cd backend
+python -m app.commands.create_admin --email admin@example.com
 ```
 
-Celery-воркер (на Windows нужен `--pool=solo`):
+**Windows PowerShell:**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+cd backend
+python -m app.commands.create_admin --email admin@example.com
+```
+
+### 3. Docker без torch
+
+Используй после сборки лёгких образов. Интерфейс, роли, админ-панель,
+история и фоновые задачи доступны; анализ возвращает демонстрационную разметку
+без нейросети и экспертной оценки.
 
 ```bash
-cd backend && celery -A app.tasks.celery_app worker --loglevel=info --pool=solo
+docker compose -f docker-compose.yml -f docker-compose.mock.yml up -d --wait
 ```
 
-Фронтенд (Vite проксирует `/api` и `/static` на `localhost:8000`):
+Адреса и команда создания администратора те же, что в полном Docker-варианте.
+Для повторного запуска используй эту же команду с обоими Compose-файлами.
+
+### 4. Локально без torch, PostgreSQL, Redis и Docker
+
+Используй лёгкий набор Python-зависимостей. База — SQLite,
+анализ — демонстрационный. Фоновые задачи Celery в этом варианте недоступны.
+
+#### Терминал 1 — API
+
+**Linux / macOS / WSL:**
 
 ```bash
-cd frontend && npm run dev
+source .venv/bin/activate
+export DATABASE_URL=sqlite:///./dev.db
+export ML_BACKEND=mock
+cd backend
+python -m app.database.create_tables
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-- API и Swagger: http://localhost:8000/docs
-- Интерфейс: http://localhost:5173
+**Windows PowerShell:**
 
-### Ядро из командной строки, без веб-части
+```powershell
+.\.venv\Scripts\Activate.ps1
+$env:DATABASE_URL = "sqlite:///./dev.db"
+$env:ML_BACKEND = "mock"
+cd backend
+python -m app.database.create_tables
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Создание таблиц можно повторять: существующие данные сохраняются.
+Alembic в этом варианте не используется.
+
+#### Терминал 2 — frontend
 
 ```bash
-python cli.py data/images/img_00007.png --boxes --masks
-python cli.py data/images/ --json data/results/report.json
+cd frontend
+npm run dev -- --host 127.0.0.1
 ```
 
----
+Интерфейс: http://127.0.0.1:5173.
 
-## Тесты
+#### Первый администратор для SQLite — один раз
 
-Два независимых набора.
+Задай тот же адрес БД в отдельном терминале.
 
-Ядро экспертной системы — БД и веса не нужны:
+**Linux / macOS / WSL:**
 
 ```bash
-pytest
+source .venv/bin/activate
+export DATABASE_URL=sqlite:///./dev.db
+cd backend
+python -m app.commands.create_admin --email admin@example.com
 ```
 
-API — нужен поднятый PostgreSQL и `TEST_DATABASE_URL` в `.env`:
+**Windows PowerShell:**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+$env:DATABASE_URL = "sqlite:///./dev.db"
+cd backend
+python -m app.commands.create_admin --email admin@example.com
+```
+
+### 5. Только ядро анализа, без веб-части
+
+Нужна полная локальная установка с torch и весами модели.
+PostgreSQL, Redis, API и frontend для CLI не требуются.
+
+**Linux / macOS / WSL:**
 
 ```bash
-cd backend && pytest
+source .venv/bin/activate
+python cli.py data/images/img_00007.png --boxes --masks --json data/results/report.json
 ```
 
-Тесты API прогоняются с `ML_BACKEND=mock` (выставляется в `backend/tests/conftest.py`):
-они проверяют контракт HTTP-слоя, а не качество модели, и не должны тянуть в CI
-гигабайты весов. Стык веб-части с ядром покрыт отдельно в
-`backend/tests/test_ml_service.py` — там проверяется преобразование результата
-`Analyzer.analyze()` в структуру ответа API; веса для этого тоже не требуются.
+**Windows PowerShell:**
 
-CI (`.github/workflows/tests.yml`) гоняет оба набора отдельными job'ами.
-
----
-
-## Формат ответа анализа
-
-`result_data` в ответе `/api/analyze` и `/api/results/{id}`:
-
-```jsonc
-{
-  "image": { "width": 224, "height": 224 },
-  "particles_detected": 13,
-  "detections": [
-    {
-      "label": "spherical",
-      "confidence": 0.984,
-      "bbox": { "x1": 68, "y1": 168, "x2": 98, "y2": 197 },
-      "circularity": 0.802,
-      "diameter_px": 27.7,
-      "area_px": 600.5
-    }
-  ],
-  "composition": { "spherical": 23.1, "fragmented": 46.2, "spongy": 23.1,
-                   "dendritic": 7.7, "teardrop": 0.0 },
-  "avg_circularity": 0.589,
-  "dispersity": 0.507,
-  "size_stats": { "min_px": 13.5, "max_px": 66.2, "mean_px": 33.1, "std_px": 16.8 },
-  "expert": {
-    "score": 15.28,
-    "verdict": "unsuitable",
-    "conclusion": "Материал не пригоден для аддитивного производства",
-    "inputs": { "sphericity": 0.231, "smoothness": 0.589, "uniformity": 0.493 }
-  },
-  "model": { "name": "yolo_particles_seg", "version": "1.0.0",
-             "type": "yolov8-seg+fuzzy" },
-  "processing_time_ms": 12814.7
-}
+```powershell
+.\.venv\Scripts\Activate.ps1
+python cli.py data/images/img_00007.png --boxes --masks --json data/results/report.json
 ```
 
-Блоки `composition`, `avg_circularity`, `dispersity`, `size_stats` и `expert`
-необязательные: в режиме `mock` их нет, и записи, сделанные до объединения
-проектов, продолжают читаться без миграции.
+Изображения с разметкой и JSON сохраняются в `data/results/`, история CLI —
+в `expert_system.db`. CLI использует стандартные пути; настройки `ES_*`
+для него задаются переменными окружения терминала, `.env` автоматически
+не загружается.
 
-Классы частиц: `dendritic`, `fragmented`, `spongy`, `spherical`, `teardrop`.
-Вердикты: `suitable` (score ≥ 70), `conditional` (≥ 40), `unsuitable`.
+### Состояние и остановка
 
----
+Состояние Docker-сервисов и логи:
 
-## Роли и доступ
+```bash
+docker compose ps
+docker compose logs -f backend worker frontend
+```
 
-| Роль | Права |
-|---|---|
-| `admin` | Полный доступ, управление пользователями, audit logs |
-| `director` | Управление своими researcher'ами, invite-коды, история группы |
-| `researcher` | Загрузка изображений, только свои исследования |
+Остановка Docker-сервисов, включая инфраструктуру локального варианта:
 
-Подробности по API — в [backend/README.md](backend/README.md) и коллекции
-Postman в `docs/postman/`.
+```bash
+docker compose down
+```
 
----
+Пользователи, роли, история и очередь сохраняются в именованных томах,
+изображения — в `backend/app/static/uploads` и `backend/app/static/processed`.
+Не добавляй `-v`, если нужны данные. У существующего тома PostgreSQL изменение
+`DB_*` в `.env` не меняет уже созданные учётные данные БД.
 
-## Дополнительно
+Локальные API, worker и Vite останавливаются через `Ctrl+C` в соответствующих
+терминалах. Выход из venv после остановки Python-процесса:
 
-- [docs/expert_system.md](docs/expert_system.md) — методика анализа: метрики,
-  база нечётких правил, формат результата ядра, использование как библиотеки
-- [backend/README.md](backend/README.md) — эндпоинты, роли, миграции, CI
-- `frontend/docs/legacy/` — документация к первой версии фронтенда, когда он
-  ходил в собственный Express-сервер (больше не используется)
+```bash
+deactivate
+```

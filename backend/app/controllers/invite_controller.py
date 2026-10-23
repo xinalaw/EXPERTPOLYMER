@@ -11,6 +11,14 @@ from app.schemas.invite import DirectorInviteCreateSchema
 from app.services.log_service import create_action_log
 
 
+def _is_expired(expires_at: datetime) -> bool:
+    # SQLite drops timezone information even for DateTime(timezone=True), while
+    # PostgreSQL preserves it. Normalize both representations to UTC.
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    return expires_at < datetime.now(timezone.utc)
+
+
 def create_invite(
     invite_data: DirectorInviteCreateSchema,
     db: Session,
@@ -66,7 +74,7 @@ def check_invite(code: str, db: Session):
             detail="Приглашение неактивно",
         )
 
-    if invite.expires_at < datetime.now(timezone.utc):
+    if _is_expired(invite.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Срок действия приглашения истек",
@@ -116,7 +124,7 @@ def accept_invite(code: str, db: Session, current_user: User):
             detail="Приглашение неактивно",
         )
 
-    if invite.expires_at < datetime.now(timezone.utc):
+    if _is_expired(invite.expires_at):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Срок действия приглашения истек",

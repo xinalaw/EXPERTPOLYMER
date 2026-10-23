@@ -14,6 +14,7 @@ const links = computed(() => [
   { name: 'home', label: 'Главная' },
   { name: 'analysis', label: 'Анализ' },
   ...(auth.user ? [{ name: 'history', label: 'История' }] : []),
+  ...(auth.user?.role === 'admin' ? [{ name: 'admin', label: 'Админ-панель' }] : []),
   { name: 'about', label: 'О системе' },
   { name: 'contacts', label: 'Контакты' },
 ])

@@ -1,10 +1,10 @@
 import os
 import uuid
-from datetime import date
+from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import status, HTTPException, UploadFile
+from kombu.exceptions import OperationalError
 from sqlalchemy.orm import Session
-from sqlalchemy import Date, cast
 
 from app.models.analysis_result import AnalysisResult
 from app.models.analysis_task import AnalysisTask
@@ -12,12 +12,9 @@ from app.models.user import User
 from app.services.log_service import create_action_log
 from app.services.access_service import (
     can_access_analysis_result,
-    can_delete_analysis_result,
 )
 from app.services.ml_service import analysis_material_image
-from celery.result import AsyncResult
 from app.tasks.analysis_tasks import analyze_image_task
-from app.tasks.celery_app import celery_app
 
 
 UPLOAD_DIR = "app/static/uploads"
@@ -70,7 +67,7 @@ def delete_analysis_result(
             detail="Результат анализа не найден",
         )
 
-    if not can_delete_analysis_result(db, current_user, analysis_result):
+    if not can_access_analysis_result(db, current_user, analysis_result):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Нет доступа к удалению этого результата",
@@ -83,11 +80,17 @@ def delete_analysis_result(
         "user_id": analysis_result.user_id,
     }
 
-    remove_static_file(analysis_result.image_path)
-    remove_static_file(analysis_result.processed_image_path)
+    # Keep the task audit trail after its result is deleted. PostgreSQL refuses
+    # to delete a result while a task still references it.
+    db.query(AnalysisTask).filter(AnalysisTask.result_id == result_id).update(
+        {AnalysisTask.result_id: None}, synchronize_session="fetch"
+    )
 
     db.delete(analysis_result)
     db.commit()
+
+    remove_static_file(deleted_result_info["image_path"])
+    remove_static_file(deleted_result_info["processed_image_path"])
 
     create_action_log(
         db=db,
@@ -143,7 +146,11 @@ def get_analysis_history(
         )
 
     if analysis_date is not None:
-        query = query.filter(cast(AnalysisResult.created_at, Date) == analysis_date)
+        day_start = datetime.combine(analysis_date, time.min, tzinfo=timezone.utc)
+        query = query.filter(
+            AnalysisResult.created_at >= day_start,
+            AnalysisResult.created_at < day_start + timedelta(days=1),
+        )
 
     return (
         query.order_by(AnalysisResult.created_at.desc())
@@ -231,14 +238,9 @@ def analyze_image_async(
     with open(original_file_path, "wb") as buffer:
         buffer.write(file.file.read())
 
-    task = analyze_image_task.delay(
-        image_path=original_file_path,
-        original_filename=file.filename or unique_filename,
-        user_id=current_user.id,
-    )
-
+    task_id = str(uuid.uuid4())
     analysis_task = AnalysisTask(
-        task_id=task.id,
+        task_id=task_id,
         status="PENDING",
         image_path=f"/static/uploads/{unique_filename}",
         original_filename=file.filename or unique_filename,
@@ -249,8 +251,27 @@ def analyze_image_async(
     db.commit()
     db.refresh(analysis_task)
 
+    # A fast worker must be able to find the job before receiving the message.
+    try:
+        analyze_image_task.apply_async(
+            task_id=task_id,
+            kwargs={
+                "image_path": original_file_path,
+                "original_filename": file.filename or unique_filename,
+                "user_id": current_user.id,
+            },
+        )
+    except OperationalError:
+        analysis_task.status = "FAILURE"
+        analysis_task.error_message = "Не удалось отправить задачу в очередь анализа"
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=analysis_task.error_message,
+        )
+
     return {
-        "task_id": task.id,
+        "task_id": task_id,
         "status": analysis_task.status,
     }
 

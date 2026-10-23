@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.controllers.auth_controller import get_db
+from app.database.dependencies import get_db
 from app.controllers.invite_controller import (
     create_invite,
     check_invite,

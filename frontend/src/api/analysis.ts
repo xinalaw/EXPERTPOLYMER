@@ -26,7 +26,7 @@ export function getAnalysisResult(id: number, signal?: AbortSignal) {
 }
 
 export function getAnalysisHistory(
-  params: { limit?: number; offset?: number; date?: string } = {},
+  params: { limit?: number; offset?: number; date?: string; user_id?: number } = {},
   signal?: AbortSignal,
 ) {
   const query = new URLSearchParams()

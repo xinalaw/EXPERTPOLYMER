@@ -27,10 +27,20 @@ watch(
     if (previous !== id) resetAnalysis()
   },
 )
-watch([() => auth.ready, () => auth.user, () => route.meta.requiresAuth], () => {
-  if (auth.ready && !auth.user && route.meta.requiresAuth)
-    router.replace({ name: 'login', query: { redirect: route.fullPath } })
-})
+watch(
+  [
+    () => auth.ready,
+    () => auth.user,
+    () => route.meta.requiresAuth,
+    () => route.meta.requiresAdmin,
+  ],
+  () => {
+    if (auth.ready && !auth.user && route.meta.requiresAuth)
+      router.replace({ name: 'login', query: { redirect: route.fullPath } })
+    else if (auth.ready && auth.user && route.meta.requiresAdmin && auth.user.role !== 'admin')
+      router.replace({ name: 'profile' })
+  },
+)
 watch(
   () => route.path,
   async () => {
@@ -106,7 +116,7 @@ onBeforeUnmount(() => {
       Проверка сессии…
     </p>
     <RouterView
-      v-else
+      v-else-if="!route.meta.requiresAdmin || auth.user?.role === 'admin'"
       :key="route.path + ':' + (route.meta.requiresAuth ? (auth.user?.id ?? 'guest') : '')"
     />
   </main>
