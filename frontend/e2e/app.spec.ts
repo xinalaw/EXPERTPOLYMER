@@ -189,16 +189,18 @@ test('history paginates, resets date offset and confirms deletion with keyboard 
   await expect(remove).toBeFocused()
   await remove.click()
   await dialog.getByRole('button', { name: 'Удалить', exact: true }).click()
-  await expect(page.getByRole('status')).toContainText('Анализ удалён')
+  await expect(page.getByRole('status').filter({ hasText: 'Анализ удалён' })).toBeVisible()
 })
 
 test('profile, settings and expired-session redirect are usable', async ({ page }) => {
   await login(page, '/profile')
   await expect(page.getByRole('heading', { name: user.username })).toBeVisible()
-  await page
-    .getByRole('navigation', { name: 'Дополнительная навигация' })
-    .getByRole('link', { name: 'Настройки' })
-    .click()
+  const navigation = page.getByRole('navigation', { name: 'Основная навигация' })
+  const userButton = navigation.getByRole('button', { name: user.username })
+  if (!(await userButton.isVisible()))
+    await navigation.getByRole('button', { name: 'Меню', exact: true }).click()
+  await userButton.click()
+  await navigation.getByRole('link', { name: 'Настройки', exact: true }).click()
   await page.getByLabel('Уменьшить анимацию').check()
   await page.getByLabel('Анализов на странице истории').selectOption('10')
   await page.getByRole('button', { name: 'Сохранить настройки' }).click()
