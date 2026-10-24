@@ -1,4 +1,4 @@
-# Expert Polymer — frontend
+# GranulAI — frontend
 
 Vue 3, TypeScript и Vue Router. Node.js 22.12+ (ветка 22), 24 или 26+.
 

@@ -9,6 +9,7 @@ from app.routes.invite_routes import router as invite_router
 from app.routes.director_routes import router as director_router
 from app.routes.log_routes import router as log_router
 from app.routes.admin_routes import router as admin_router
+from app.routes.generation_routes import router as generation_router
 
 app = FastAPI(
     title="Scientific System Backend API",
@@ -31,6 +32,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+app.include_router(generation_router)
 app.include_router(auth_router)
 app.include_router(analysis_router)
 app.include_router(user_router)

@@ -13,6 +13,7 @@ const mobileButton = ref<HTMLButtonElement | null>(null)
 const links = computed(() => [
   { name: 'home', label: 'Главная' },
   { name: 'analysis', label: 'Анализ' },
+  { name: 'generation', label: 'Генерация' },
   ...(auth.user ? [{ name: 'history', label: 'История' }] : []),
   ...(auth.user?.role === 'admin' ? [{ name: 'admin', label: 'Админ-панель' }] : []),
   { name: 'about', label: 'О системе' },
@@ -49,7 +50,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', outside))
 <template>
   <header class="navbar" @keydown.esc="escape">
     <nav class="nav-container" aria-label="Основная навигация">
-      <RouterLink to="/" class="brand">Expert Polymer<span>AI Analysis System</span></RouterLink>
+      <RouterLink to="/" class="brand">GranulAI<span>AI Analysis System</span></RouterLink>
       <button
         ref="mobileButton"
         class="menu-toggle"

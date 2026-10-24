@@ -44,7 +44,7 @@ const features = [
     <section class="hero" :style="{ '--header-height': headerHeight + 'px' }">
       <div class="container hero-layout">
         <div>
-          <p class="eyebrow">EXPERT POLYMER</p>
+          <p class="eyebrow">GranulAI</p>
           <h1>Экспертная система анализа <span>композитных материалов</span></h1>
           <p class="hero-description">
             От микроскопического снимка — к характеристикам частиц и экспертному заключению.
@@ -52,7 +52,9 @@ const features = [
           </p>
           <div class="actions">
             <RouterLink class="btn hero-primary" to="/analysis">Начать анализ</RouterLink
-            ><RouterLink class="btn hero-secondary" to="/about">Узнать больше</RouterLink>
+            ><RouterLink class="btn hero-secondary" to="/generation"
+              >Сгенерировать снимок</RouterLink
+            >
           </div>
         </div>
         <div class="molecule" aria-hidden="true">

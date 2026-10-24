@@ -21,7 +21,7 @@ const features = [
 <template>
   <div class="page-shell">
     <header class="page-heading">
-      <h1>О системе Expert Polymer</h1>
+      <h1>О системе GranulAI</h1>
       <p>
         Инструмент для исследования структуры полимерных порошков по микроскопическим изображениям.
       </p>

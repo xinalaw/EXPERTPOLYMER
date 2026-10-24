@@ -16,7 +16,7 @@ describe('API client', () => {
     await apiFetch('/api/analyze', { method: 'POST', body })
     const authenticatedOptions = fetch.mock.calls[1]![1]
     expect(authenticatedOptions.headers.get('Authorization')).toBe('Bearer secret-token')
-    expect(options.headers.get('X-Requested-With')).toBe('ExpertPolymer')
+    expect(options.headers.get('X-Requested-With')).toBe('GranulAI')
     expect(options.headers.has('Content-Type')).toBe(false)
   })
   it('preserves HTTP status and expires only authenticated requests on 401', async () => {

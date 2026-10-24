@@ -30,6 +30,12 @@ export const router = createRouter({
       meta: { title: 'Анализ', requiresAuth: true },
     },
     {
+      path: '/generation',
+      name: 'generation',
+      component: () => import('./components/GenerationPage.vue'),
+      meta: { title: 'Генерация изображений', requiresAuth: true },
+    },
+    {
       path: '/history',
       name: 'history',
       component: () => import('./components/AnalysisHistoryPage.vue'),
@@ -129,7 +135,7 @@ router.beforeEach(async (to) => {
   }
 })
 router.afterEach((to) => {
-  document.title = to.meta.title + ' — Expert Polymer'
+  document.title = to.meta.title + ' — GranulAI'
 })
 
 export function safeRedirect(value: unknown) {

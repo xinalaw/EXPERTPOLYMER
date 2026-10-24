@@ -117,7 +117,7 @@ test('navigation, browser back and refresh preserve URLs and avoid horizontal ov
   await expect(page.getByRole('heading', { name: /Экспертная система анализа/ })).toBeVisible()
   await page.screenshot({ path: test.info().outputPath('home.png'), fullPage: true })
   await page.getByRole('link', { name: 'Узнать больше' }).click()
-  await expect(page.getByRole('heading', { name: 'О системе Expert Polymer' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'О системе GranulAI' })).toBeVisible()
   await page.goBack()
   await expect(page.getByRole('heading', { name: /Экспертная система анализа/ })).toBeVisible()
   await page.goForward()

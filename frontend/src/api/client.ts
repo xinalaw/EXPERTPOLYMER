@@ -76,7 +76,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
     cancel()
   }, timeoutMs)
   const headers = new Headers(rest.headers)
-  headers.set('X-Requested-With', 'ExpertPolymer')
+  headers.set('X-Requested-With', 'GranulAI')
   if (requestToken) headers.set('Authorization', `Bearer ${requestToken}`)
   else headers.delete('Authorization')
   if (rest.body && !(rest.body instanceof FormData)) headers.set('Content-Type', 'application/json')

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import PrototypeNotice from './components/PrototypeNotice.vue'
 import NavBar from './components/NavBar.vue'
 import Footer from './components/Footer.vue'
 import { auth, restoreSession, signOut } from '@/stores/auth'
@@ -99,6 +100,7 @@ onBeforeUnmount(() => {
   >
   <NavBar :logging-out="loggingOut" @logout="logout" />
   <main id="main-content" ref="main" tabindex="-1">
+    <PrototypeNotice />
     <div v-if="auth.error" class="page-shell notice error" role="alert">
       <p>{{ auth.error }}</p>
       <button class="btn btn-secondary" @click="restoreSession(true)">Проверить соединение</button>

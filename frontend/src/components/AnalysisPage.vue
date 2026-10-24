@@ -26,6 +26,15 @@ function download() {
       <h1>Анализ композитных материалов</h1>
       <p>Загрузите микроскопический снимок для анализа структуры материала.</p>
     </header>
+    <aside class="notice" aria-label="Требования к изображениям">
+      <strong>Анализ в режиме прототипа</strong>
+      <p>
+        Используйте демонстрационные СЭМ-снимки отдельных частиц на тёмном фоне, созданные
+        встроенным генератором. Фотографии предметов и другие произвольные изображения не подходят
+        для проверки модели.
+      </p>
+      <RouterLink class="btn btn-secondary" to="/generation">Сгенерировать снимок</RouterLink>
+    </aside>
     <p v-if="error || localError" class="notice error" role="alert">{{ error || localError }}</p>
     <FileUploader v-if="!file" :busy="busy" @select="select" @invalid="localError = $event" />
     <section v-else-if="phase !== 'complete'" class="panel">
@@ -46,7 +55,10 @@ function download() {
     </section>
     <section v-if="result" class="panel">
       <h2 tabindex="-1">Результаты анализа</h2>
-      <p role="status">Анализ завершён успешно.</p>
+      <p role="status">
+        Обработка завершена. Результат прототипа может содержать ошибки; проверьте его со
+        специалистом.
+      </p>
       <AnalysisResult :result="result" :original="preview" />
       <div class="actions">
         <button class="btn btn-primary" @click="download">Скачать отчёт (JSON)</button

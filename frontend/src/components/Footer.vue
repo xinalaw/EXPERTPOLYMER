@@ -2,9 +2,9 @@
   <footer class="footer">
     <div class="container footer-content">
       <div class="footer-info">
-        <p class="footer-brand">Expert Polymer</p>
+        <p class="footer-brand">GranulAI</p>
         <p>Анализ структуры композитных материалов.</p>
-        <p class="footer-copyright">© {{ new Date().getFullYear() }} Expert Polymer</p>
+        <p class="footer-copyright">© {{ new Date().getFullYear() }} GranulAI</p>
       </div>
       <div class="footer-support">
         <div class="footer-support-logos">
