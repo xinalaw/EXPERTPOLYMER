@@ -7,6 +7,9 @@ import ResultImage from '@/components/ui/ResultImage.vue'
 const props = defineProps<{ result: AnalysisResult; original?: string }>()
 const data = computed(() => props.result.result_data)
 const expert = computed(() => data.value?.expert)
+const conclusion = computed(() =>
+  (props.result.result || '').replace(/\s*Оценка пригодности [\s\S]*$/, '').trim(),
+)
 const labels: Record<string, string> = {
   dendritic: 'Дендритные',
   fragmented: 'Осколочные',
@@ -35,7 +38,7 @@ const composition = computed(() =>
     <dl class="metrics">
       <div>
         <dt>Результат</dt>
-        <dd>{{ result.result || '—' }}</dd>
+        <dd>{{ conclusion || '—' }}</dd>
       </div>
       <div>
         <dt>Уверенность</dt>
